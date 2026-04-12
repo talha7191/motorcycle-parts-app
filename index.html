@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Parts Entry — Wholesale Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #F5F4F0;
+    --surface: #FFFFFF;
+    --border: #E2E0D8;
+    --border-strong: #C8C5BB;
+    --text: #1A1917;
+    --text-muted: #6B6860;
+    --text-hint: #9E9B93;
+    --accent: #1A1917;
+    --accent-fg: #FFFFFF;
+    --success-bg: #EAF3DE;
+    --success-text: #3B6D11;
+    --danger: #A32D2D;
+    --danger-bg: #FCEBEB;
+    --tag-bg: #EEEDFE;
+    --tag-text: #3C3489;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 3rem;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-inner {
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .app-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .app-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #639922;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .container {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 1.25rem;
+  }
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 1.25rem;
+    gap: 4px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 1rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .field { margin-bottom: 0.875rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 9px 11px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B6860' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    padding-right: 32px;
+  }
+  .part-row {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: var(--bg);
+    position: relative;
+  }
+  .part-row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .part-number {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-hint);
+    letter-spacing: 0.05em;
+  }
+  .remove-part {
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--danger);
+    background: var(--danger-bg);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 3px 9px;
+    cursor: pointer;
+  }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .part-total {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--tag-text);
+    background: var(--tag-bg);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    text-align: right;
+    margin-top: 6px;
+  }
+  .add-part-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    background: transparent;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-bottom: 1rem;
+    transition: all 0.15s;
+  }
+  .add-part-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--surface);
+  }
+  .bill-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0;
+  }
+  .bill-total-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+  }
+  .bill-total-amount {
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+  }
+  .inline-add {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .inline-add input {
+    flex: 1;
+    padding: 9px 11px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+  .inline-add input:focus { border-color: var(--accent); background: var(--surface); }
+  .inline-add button {
+    padding: 9px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .inline-add button:hover { background: var(--bg); border-color: var(--accent); }
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--accent);
+    color: var(--accent-fg);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    letter-spacing: -0.01em;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .submit-btn:hover { opacity: 0.88; }
+  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent);
+    color: #fff;
+    padding: 11px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--danger); }
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(245,244,240,0.8);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50;
+    display: none;
+  }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2.5px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0.875rem 0;
+  }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="app-title">Parts Manager</div>
+      <div class="app-subtitle">Wholesale Entry System</div>
+    </div>
+    <div style="font-size:12px; color: var(--text-muted);">
+      <span class="status-dot"></span>Live
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('sale')">Sale Entry</button>
+    <button class="tab-btn" onclick="switchTab('restock')">Restock Entry</button>
+  </div>
+
+  <!-- SALE TAB -->
+  <div id="sale-tab">
+    <div class="card">
+      <div class="card-title">Visit details</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="sale-date" />
+        </div>
+        <div class="field">
+          <label>Visit number</label>
+          <select id="sale-visit">
+            <option>1st Visit</option>
+            <option>2nd Visit</option>
+            <option>3rd Visit</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Shop owner</label>
+        <select id="sale-shop"><option value="">Loading shops...</option></select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Parts sold</div>
+      <div id="parts-container"></div>
+      <button class="add-part-btn" onclick="addPartRow()">+ Add another part</button>
+      <div class="bill-total">
+        <span class="bill-total-label">Total bill amount</span>
+        <span class="bill-total-amount" id="bill-total">PKR 0</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Add new shop or part</div>
+      <div class="field">
+        <label>New shop name</label>
+        <div class="inline-add">
+          <input type="text" id="new-shop" placeholder="e.g. Al-Madina Motors" />
+          <button onclick="addNewShop()">Add shop</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="field" style="margin-bottom:0">
+        <label>New part name</label>
+        <div class="inline-add">
+          <input type="text" id="new-part" placeholder="e.g. Clutch Wire" />
+          <button onclick="addNewPart()">Add part</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="sale-submit-btn" onclick="submitSale()">Submit Sale Entry</button>
+  </div>
+
+  <!-- RESTOCK TAB -->
+  <div id="restock-tab" style="display:none">
+    <div class="card">
+      <div class="card-title">Restock details</div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="restock-date" />
+      </div>
+      <div class="field">
+        <label>Part name</label>
+        <select id="restock-part"><option value="">Loading parts...</option></select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Quantity purchased</label>
+          <input type="number" id="restock-qty" placeholder="0" min="0" />
+        </div>
+        <div class="field">
+          <label>Cost price/unit (PKR)</label>
+          <input type="number" id="restock-price" placeholder="0" min="0" />
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Supplier name (optional)</label>
+        <input type="text" id="restock-supplier" placeholder="Supplier name" />
+      </div>
+    </div>
+    <button class="submit-btn" id="restock-submit-btn" onclick="submitRestock()">Submit Restock Entry</button>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqM7TK0rbS_HbyDFO9F6oH9wC_aZh028H-oqA2bjSIAdy833nTn1xyWU6Icrp6OkLu_Q/exec";
+
+let shops = [];
+let parts = [];
+let partCount = 0;
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+document.getElementById('sale-date').value = today();
+document.getElementById('restock-date').value = today();
+
+async function loadData() {
+  try {
+    const res = await fetch(SCRIPT_URL + "?type=get_data");
+    const data = await res.json();
+    shops = data.shops || [];
+    parts = data.parts || [];
+  } catch(e) {
+    shops = ["Al-Madina Motors","Raja Spare Parts","Bismillah Traders","Ahmed Auto Store","Khan Parts House"];
+    parts = ["Brake Pad","Clutch Wire","Spark Plug","Chain","Headlight Bulb","Seat Cover","Tire","Shock Absorber","Air Filter","Side Mirror"];
+  }
+  populateShopDropdowns();
+  populatePartDropdowns();
+  addPartRow();
+}
+
+function populateShopDropdowns() {
+  const sel = document.getElementById('sale-shop');
+  sel.innerHTML = '<option value="">Select shop owner...</option>';
+  shops.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+}
+
+function populatePartDropdowns() {
+  const rsel = document.getElementById('restock-part');
+  rsel.innerHTML = '<option value="">Select part...</option>';
+  parts.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; rsel.appendChild(o); });
+  document.querySelectorAll('.part-select').forEach(sel => {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Select part...</option>';
+    parts.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; if(p===cur) o.selected=true; sel.appendChild(o); });
+  });
+}
+
+function addPartRow(preselect) {
+  partCount++;
+  const id = partCount;
+  const div = document.createElement('div');
+  div.className = 'part-row';
+  div.id = 'pr-' + id;
+  div.innerHTML = `
+    <div class="part-row-top">
+      <span class="part-number">PART ${String(id).padStart(2,'0')}</span>
+      ${id > 1 ? `<button class="remove-part" onclick="removePartRow(${id})">Remove</button>` : ''}
+    </div>
+    <div class="field">
+      <label>Part name</label>
+      <select class="part-select" id="pname-${id}" onchange="calcTotal()">
+        <option value="">Select part...</option>
+        ${parts.map(p=>`<option value="${p}" ${p===preselect?'selected':''}>${p}</option>`).join('')}
+      </select>
+    </div>
+    <div class="two-col">
+      <div class="field" style="margin-bottom:0">
+        <label>Quantity</label>
+        <input type="number" id="pqty-${id}" placeholder="0" min="0" oninput="calcRowTotal(${id})" />
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Price/unit (PKR)</label>
+        <input type="number" id="pprice-${id}" placeholder="0" min="0" oninput="calcRowTotal(${id})" />
+      </div>
+    </div>
+    <div class="part-total" id="ptotal-${id}">Total: PKR 0</div>
+  `;
+  document.getElementById('parts-container').appendChild(div);
+  calcTotal();
+}
+
+function removePartRow(id) {
+  const el = document.getElementById('pr-'+id);
+  if(el) el.remove();
+  calcTotal();
+}
+
+function calcRowTotal(id) {
+  const qty = parseFloat(document.getElementById('pqty-'+id)?.value)||0;
+  const price = parseFloat(document.getElementById('pprice-'+id)?.value)||0;
+  const t = qty * price;
+  const el = document.getElementById('ptotal-'+id);
+  if(el) el.textContent = 'Total: PKR ' + Math.round(t).toLocaleString();
+  calcTotal();
+}
+
+function calcTotal() {
+  let total = 0;
+  document.querySelectorAll('.part-row').forEach(row => {
+    const id = row.id.split('-')[1];
+    const qty = parseFloat(document.getElementById('pqty-'+id)?.value)||0;
+    const price = parseFloat(document.getElementById('pprice-'+id)?.value)||0;
+    total += qty * price;
+  });
+  document.getElementById('bill-total').textContent = 'PKR ' + Math.round(total).toLocaleString();
+}
+
+async function addNewShop() {
+  const val = document.getElementById('new-shop').value.trim();
+  if(!val) return;
+  shops.push(val);
+  populateShopDropdowns();
+  document.getElementById('sale-shop').value = val;
+  document.getElementById('new-shop').value = '';
+  showToast('Shop added: ' + val);
+  try {
+    await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({type:'new_shop', name:val}) });
+  } catch(e) {}
+}
+
+async function addNewPart() {
+  const val = document.getElementById('new-part').value.trim();
+  if(!val) return;
+  parts.push(val);
+  populatePartDropdowns();
+  document.getElementById('new-part').value = '';
+  showToast('Part added: ' + val);
+  try {
+    await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({type:'new_part', name:val}) });
+  } catch(e) {}
+}
+
+async function submitSale() {
+  const date = document.getElementById('sale-date').value;
+  const shop = document.getElementById('sale-shop').value;
+  const visit = document.getElementById('sale-visit').value;
+  if(!date || !shop) { showToast('Please select date and shop owner', true); return; }
+  const rows = [];
+  let valid = true;
+  document.querySelectorAll('.part-row').forEach(row => {
+    const id = row.id.split('-')[1];
+    const part = document.getElementById('pname-'+id)?.value;
+    const qty = parseFloat(document.getElementById('pqty-'+id)?.value)||0;
+    const price = parseFloat(document.getElementById('pprice-'+id)?.value)||0;
+    if(!part) { valid = false; return; }
+    if(qty > 0) rows.push({ part, qty, price });
+  });
+  if(!valid) { showToast('Please select all part names', true); return; }
+  if(rows.length === 0) { showToast('Please add at least one part', true); return; }
+  setLoading(true);
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ type:'sale', date, shop, visit, rows })
+    });
+    showToast('Sale submitted successfully!');
+    resetSaleForm();
+  } catch(e) {
+    showToast('Submission failed. Check internet.', true);
+  }
+  setLoading(false);
+}
+
+async function submitRestock() {
+  const date = document.getElementById('restock-date').value;
+  const part = document.getElementById('restock-part').value;
+  const qty = parseFloat(document.getElementById('restock-qty').value)||0;
+  const price = parseFloat(document.getElementById('restock-price').value)||0;
+  const supplier = document.getElementById('restock-supplier').value;
+  if(!date || !part || qty === 0 || price === 0) { showToast('Please fill all required fields', true); return; }
+  setLoading(true);
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ type:'restock', date, part, qty, price, supplier })
+    });
+    showToast('Restock submitted successfully!');
+    document.getElementById('restock-qty').value = '';
+    document.getElementById('restock-price').value = '';
+    document.getElementById('restock-supplier').value = '';
+    document.getElementById('restock-part').value = '';
+  } catch(e) {
+    showToast('Submission failed. Check internet.', true);
+  }
+  setLoading(false);
+}
+
+function resetSaleForm() {
+  document.getElementById('sale-shop').value = '';
+  document.getElementById('sale-visit').value = '1st Visit';
+  document.getElementById('sale-date').value = today();
+  document.getElementById('parts-container').innerHTML = '';
+  partCount = 0;
+  addPartRow();
+  calcTotal();
+}
+
+function switchTab(tab) {
+  document.getElementById('sale-tab').style.display = tab==='sale' ? 'block' : 'none';
+  document.getElementById('restock-tab').style.display = tab==='restock' ? 'block' : 'none';
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (tab==='sale'&&i===0)||(tab==='restock'&&i===1));
+  });
+}
+
+function setLoading(on) {
+  document.getElementById('loading').style.display = on ? 'flex' : 'none';
+  document.getElementById('sale-submit-btn').disabled = on;
+  document.getElementById('restock-submit-btn').disabled = on;
+}
+
+let toastTimer;
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  setTimeout(() => t.classList.add('show'), 10);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+loadData();
+</script>
+</body>
+</html>
