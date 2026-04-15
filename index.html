@@ -340,23 +340,14 @@
         </div>
       </div>
 
+      <div class="field"><label>Manufacturer Name</label><input type="text" id="re-maker" placeholder="Manufacturer name"></div>
       <div class="two-col">
-        <div class="field">
-          <label>Price Condition</label>
-          <select id="re-condition">
-            <option value="PC">PC (Per Unit)</option>
-            <option value="Dozen">Dozen (12)</option>
-            <option value="Packet">Packet</option>
-            <option value="Set">Set</option>
-          </select>
-        </div>
-        <div class="field"><label>Model</label><input type="text" id="re-model" placeholder="CD70 / CG125 / Common"></div>
+        <div class="field"><label>Manufacturer City</label><input type="text" id="re-city" placeholder="City"></div>
+        <div class="field"><label>Manufacturer Contact</label><input type="tel" id="re-mc" placeholder="Contact no."></div>
       </div>
-
-      <div class="field"><label>Maker Name</label><input type="text" id="re-maker" placeholder="Manufacturer name"></div>
       <div class="two-col">
-        <div class="field"><label>Maker City</label><input type="text" id="re-city" placeholder="City"></div>
-        <div class="field"><label>Maker Contact</label><input type="tel" id="re-mc" placeholder="Contact no."></div>
+        <div class="field"><label>Model</label><input type="text" id="re-model" placeholder="CD70 / CG125 / Common"></div>
+        <div class="field"><label>Price Condition</label><input type="text" id="re-condition" placeholder="PC / Dozen / Packet / Set"></div>
       </div>
 
       <div style="height:1px;background:#f0f0f0;margin:4px 0 14px;"></div>
@@ -505,26 +496,16 @@ function pick(inId, ddId, val) {
 function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 200); }
 
 // Auto-fill restock fields from stored parts data
-// ACTUAL sheet column order:
-// B=Part Name, C=Manufacturer Name, D=Manufacturer City, E=Manufacturer Contact, F=Model, G=Price Condition, H=Price Per Unit
+// Sheet: B=Part Name, C=Manufacturer Name, D=Manufacturer City,
+//        E=Manufacturer Contact, F=Model, G=Price Condition, H=Price Per Unit
 function autofillRestock(partName) {
   const d = partsData[partName];
   if (!d) return;
-  // Maker Name (C) → index 2
-  document.getElementById('re-maker').value = d.maker || '';
-  // Maker City (D) → index 3
-  document.getElementById('re-city').value = d.city || '';
-  // Maker Contact (E) → index 4
-  document.getElementById('re-mc').value = d.contact || '';
-  // Model (F) → index 5
-  document.getElementById('re-model').value = d.model || '';
-  // Price Condition (G) → index 6
-  if (d.condition) {
-    const sel = document.getElementById('re-condition');
-    for (let i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value === d.condition) { sel.selectedIndex = i; break; }
-    }
-  }
+  document.getElementById('re-maker').value     = d.maker     || '';
+  document.getElementById('re-city').value      = d.city      || '';
+  document.getElementById('re-mc').value        = d.contact   || '';
+  document.getElementById('re-model').value     = d.model     || '';
+  document.getElementById('re-condition').value = d.condition || '';
 }
 
 // Part row search (dynamic)
@@ -661,8 +642,7 @@ async function submitRestock() {
   try {
     await post({type:'restock',date,part,qty,price,condition,model,maker,city,contact,supplier});
     toastMsg('Restock saved!');
-    ['re-part-s','re-qty','re-price','re-model','re-maker','re-city','re-mc','re-supplier'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('re-condition').selectedIndex=0;
+    ['re-part-s','re-qty','re-price','re-model','re-maker','re-city','re-mc','re-supplier','re-condition'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('re-total').textContent='PKR 0';
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
