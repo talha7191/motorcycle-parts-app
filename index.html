@@ -49,11 +49,12 @@
   .live-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-  .tabs { display: flex; border-top: 1px solid #f0f0f0; }
+  .tabs { display: flex; border-top: 1px solid #f0f0f0; gap: 4px; padding: 0 4px; }
   .tab {
-    flex: 1; padding: 12px 8px; text-align: center;
-    font-size: 13px; font-weight: 600; color: #999;
+    flex: 1; padding: 8px 6px; text-align: center;
+    font-size: 11px; font-weight: 700; color: #999; letter-spacing: 0.3px;
     border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s;
+    text-transform: uppercase;
   }
   .tab:hover { color: #555; }
   .tab.active-sale { color: #1a1a2e; border-bottom-color: #1a1a2e; }
@@ -371,6 +372,32 @@
       </div>
     </div>
     <button class="submit-btn green" onclick="submitRestock()">Submit Restock Entry</button>
+
+    <button class="collapsible-trigger" onclick="tog('init-stock-body',this)" style="margin-top:14px;">
+      <span>+ Set Initial / Opening Stock</span><span class="chevron">▼</span>
+    </button>
+    <div class="collapsible-body" id="init-stock-body">
+      <p class="section-note">Use this <strong>once per part</strong> to enter the current quantity you already have in stock before this system started tracking. This sets the opening stock count.</p>
+      <div class="field">
+        <label>Part Name</label>
+        <div class="search-wrap">
+          <input type="text" id="is-part-s" placeholder="Type to search part..." autocomplete="off"
+            oninput="fsearch('is-part-s','is-part-dd',parts)"
+            onfocus="osearch('is-part-s','is-part-dd',parts)"
+            onblur="dclose('is-part-dd')">
+          <div class="dropdown-list" id="is-part-dd"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Current Stock Quantity</label>
+        <input type="number" id="is-qty" placeholder="How many units you currently have" min="0">
+      </div>
+      <div class="field">
+        <label>Notes <span style="font-weight:400;color:#bbb">(optional)</span></label>
+        <input type="text" id="is-notes" placeholder="e.g. counted on 15 April 2026">
+      </div>
+      <button class="save-btn dark" onclick="saveInitStock()">Save Opening Stock</button>
+    </div>
   </div>
 
   <!-- ══ PAYMENT ══ -->
@@ -477,20 +504,25 @@ function pick(inId, ddId, val) {
 function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 200); }
 
 // Auto-fill restock fields from stored parts data
+// Sheet column order: B=Part Name, C=Manufacturer Name, D=Manufacturer City, E=Manufacturer Contact, F=Model, G=Price Condition, H=Price Per Unit
 function autofillRestock(partName) {
   const d = partsData[partName];
   if (!d) return;
+  // Price Condition (G)
   if (d.condition) {
     const sel = document.getElementById('re-condition');
     for (let i = 0; i < sel.options.length; i++) {
       if (sel.options[i].value === d.condition) { sel.selectedIndex = i; break; }
     }
   }
+  // Model (F)
   if (d.model) document.getElementById('re-model').value = d.model;
+  // Maker Name (C)
   if (d.maker) document.getElementById('re-maker').value = d.maker;
+  // Maker City (D)
   if (d.city)  document.getElementById('re-city').value  = d.city;
+  // Maker Contact (E)
   if (d.contact) document.getElementById('re-mc').value  = d.contact;
-  if (d.supplier) document.getElementById('re-supplier').value = d.supplier;
 }
 
 // Part row search (dynamic)
@@ -680,6 +712,23 @@ async function saveShop() {
     toastMsg(name+' added!');
     ['ns-name','ns-loc','ns-contact','ns-bal'].forEach(id=>document.getElementById(id).value='');
   } catch(e){ toastMsg('Error. Check internet.','error'); }
+  eLoad();
+}
+
+// Save Initial / Opening Stock
+async function saveInitStock() {
+  const part = document.getElementById('is-part-s').value.trim();
+  const qty = parseFloat(document.getElementById('is-qty').value);
+  const notes = document.getElementById('is-notes').value.trim();
+  if (!part || isNaN(qty) || qty < 0) { toastMsg('Enter part and valid quantity', 'error'); return; }
+  sLoad();
+  try {
+    await post({ type: 'initial_stock', part, qty, notes });
+    toastMsg('Opening stock saved for ' + part + '!', 'amber');
+    document.getElementById('is-part-s').value = '';
+    document.getElementById('is-qty').value = '';
+    document.getElementById('is-notes').value = '';
+  } catch(e) { toastMsg('Error. Check internet.', 'error'); }
   eLoad();
 }
 
