@@ -1,482 +1,706 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Parts Entry — Wholesale Manager</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parts Manager</title>
 <style>
-  :root {
-    --bg: #F5F4F0; --surface: #FFFFFF; --border: #E2E0D8; --border-strong: #C8C5BB;
-    --text: #1A1917; --text-muted: #6B6860; --text-hint: #9E9B93;
-    --accent: #1A1917; --accent-fg: #FFFFFF;
-    --danger: #A32D2D; --danger-bg: #FCEBEB;
-    --tag-bg: #EEEDFE; --tag-text: #3C3489;
-    --radius: 10px; --radius-sm: 6px;
-  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 3rem; }
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.25rem; position: sticky; top: 0; z-index: 10; }
-  .header-inner { max-width: 520px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-  .app-title { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
-  .app-subtitle { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #639922; display: inline-block; margin-right: 6px; }
-  .container { max-width: 520px; margin: 0 auto; padding: 1.25rem; }
-  .tabs { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; margin-bottom: 1.25rem; gap: 4px; }
-  .tab-btn { flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif; border: none; border-radius: var(--radius-sm); cursor: pointer; background: transparent; color: var(--text-muted); transition: all 0.15s; }
-  .tab-btn.active { background: var(--accent); color: var(--accent-fg); }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
-  .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 1rem; font-family: 'DM Mono', monospace; }
-  .field { margin-bottom: 0.875rem; }
-  .field:last-child { margin-bottom: 0; }
-  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; }
-  .field input, .field select { width: 100%; padding: 9px 11px; font-size: 14px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); outline: none; transition: border-color 0.15s; -webkit-appearance: none; appearance: none; }
-  .field input:focus, .field select:focus { border-color: var(--accent); background: var(--surface); }
-  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B6860' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 32px; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  /* Searchable */
-  .search-wrap { position: relative; }
-  .search-input { width: 100%; padding: 9px 11px; font-size: 14px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
-  .search-input:focus { border-color: var(--accent); background: var(--surface); }
-  .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); max-height: 200px; overflow-y: auto; z-index: 99; display: none; }
-  .search-dropdown.open { display: block; }
-  .search-opt { padding: 9px 12px; font-size: 13px; cursor: pointer; color: var(--text); border-bottom: 0.5px solid var(--border); }
-  .search-opt:last-child { border-bottom: none; }
-  .search-opt:hover { background: var(--bg); }
-  .search-opt.chosen { background: var(--tag-bg); color: var(--tag-text); font-weight: 500; }
-  .no-res { padding: 9px 12px; font-size: 13px; color: var(--text-hint); }
-  /* Part rows */
-  .part-row { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 0.75rem; background: var(--bg); }
-  .part-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-  .part-number { font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text-hint); letter-spacing: 0.05em; }
-  .remove-part { font-size: 12px; font-family: 'DM Sans', sans-serif; color: var(--danger); background: var(--danger-bg); border: none; border-radius: var(--radius-sm); padding: 3px 9px; cursor: pointer; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .part-total { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--tag-text); background: var(--tag-bg); padding: 4px 8px; border-radius: var(--radius-sm); text-align: right; margin-top: 6px; }
-  .add-part-btn { width: 100%; padding: 10px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 500; background: transparent; border: 1.5px dashed var(--border-strong); border-radius: var(--radius-sm); color: var(--text-muted); cursor: pointer; margin-bottom: 1rem; transition: all 0.15s; }
-  .add-part-btn:hover { border-color: var(--accent); color: var(--text); background: var(--surface); }
-  .bill-total { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--accent); border-radius: var(--radius-sm); }
-  .bill-total-label { font-size: 13px; color: rgba(255,255,255,0.7); }
-  .bill-total-amount { font-size: 17px; font-weight: 600; color: #fff; font-family: 'DM Mono', monospace; }
-  /* Collapsible */
-  .collapsible-trigger {
-    width: 100%; display: flex; align-items: center; justify-content: space-between;
-    padding: 13px 1.25rem; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); cursor: pointer; margin-bottom: 0;
-    font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif;
-    color: var(--text-muted); transition: all 0.15s;
+
+  body {
+    background: #f0f2f5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+    color: #1a1a2e;
   }
-  .collapsible-trigger:hover { color: var(--text); border-color: var(--border-strong); }
-  .collapsible-trigger.open { border-radius: var(--radius) var(--radius) 0 0; border-bottom-color: transparent; color: var(--text); }
-  .collapsible-trigger .trigger-left { display: flex; align-items: center; gap: 8px; }
-  .trigger-icon { font-size: 14px; }
-  .chevron { font-size: 11px; transition: transform 0.2s; color: var(--text-hint); }
+
+  .header {
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0 12px;
+  }
+
+  .header-brand { display: flex; align-items: center; gap: 10px; }
+
+  .logo {
+    width: 34px; height: 34px;
+    background: #1a1a2e;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .header-title { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+  .header-sub { font-size: 11px; color: #999; }
+
+  .live-badge { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #22c55e; font-weight: 600; }
+  .live-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .tabs { display: flex; border-top: 1px solid #f0f0f0; }
+  .tab {
+    flex: 1; padding: 12px 8px; text-align: center;
+    font-size: 13px; font-weight: 600; color: #999;
+    border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s;
+  }
+  .tab:hover { color: #555; }
+  .tab.active-sale { color: #1a1a2e; border-bottom-color: #1a1a2e; }
+  .tab.active-restock { color: #16a34a; border-bottom-color: #16a34a; }
+  .tab.active-payment { color: #d97706; border-bottom-color: #d97706; }
+
+  .content { padding: 16px; max-width: 600px; margin: 0 auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;
+    padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .card-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: #999; margin-bottom: 14px;
+  }
+
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+
+  input[type="text"], input[type="number"], input[type="tel"], input[type="date"], select {
+    width: 100%; background: #fafafa; border: 1px solid #e0e0e0;
+    border-radius: 8px; padding: 10px 12px; color: #1a1a2e;
+    font-size: 14px; font-family: inherit; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    border-color: #1a1a2e; box-shadow: 0 0 0 3px rgba(26,26,46,0.08); background: #fff;
+  }
+  input::placeholder { color: #bbb; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .two-col .field { margin-bottom: 0; }
+
+  /* SEARCHABLE DROPDOWN */
+  .search-wrap { position: relative; }
+  .dropdown-list {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+    z-index: 300; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  }
+  .dropdown-list.open { display: block; }
+  .dropdown-item {
+    padding: 10px 14px; font-size: 13px; cursor: pointer;
+    border-bottom: 1px solid #f5f5f5; transition: background 0.1s;
+  }
+  .dropdown-item:last-child { border-bottom: none; }
+  .dropdown-item:hover { background: #f5f5f5; }
+  .dropdown-item.no-match { color: #bbb; cursor: default; font-style: italic; }
+
+  /* PART ROWS */
+  .part-row {
+    background: #fafafa; border: 1px solid #e8e8e8;
+    border-radius: 10px; padding: 14px; margin-bottom: 10px;
+  }
+  .part-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .part-row-num { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; }
+  .remove-btn {
+    background: none; border: 1px solid #e0e0e0; color: #e53e3e;
+    border-radius: 6px; padding: 3px 10px; font-size: 12px;
+    cursor: pointer; font-weight: 600; transition: all 0.15s;
+  }
+  .remove-btn:hover { background: #fff5f5; border-color: #e53e3e; }
+
+  .part-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .part-grid .field { margin-bottom: 0; }
+
+  .row-total {
+    margin-top: 10px; text-align: right; font-size: 12px; font-weight: 600;
+    color: #666; background: #fff; border: 1px solid #e8e8e8;
+    border-radius: 6px; padding: 6px 10px;
+  }
+  .row-total span { color: #1a1a2e; }
+
+  .add-part-btn {
+    width: 100%; background: #fff; border: 1.5px dashed #d0d0d0;
+    border-radius: 8px; padding: 12px; color: #888; font-size: 13px;
+    font-weight: 600; font-family: inherit; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 14px;
+  }
+  .add-part-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
+
+  .bill-total-bar {
+    border-radius: 10px; padding: 14px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    color: #fff; margin-bottom: 0;
+  }
+  .bill-total-bar.dark { background: #1a1a2e; }
+  .bill-total-bar.green { background: #16a34a; }
+  .bill-total-bar.amber { background: #d97706; }
+  .bill-total-label { font-size: 13px; font-weight: 600; opacity: 0.8; }
+  .bill-total-amount { font-size: 20px; font-weight: 700; }
+
+  /* COLLAPSIBLE */
+  .collapsible-trigger {
+    width: 100%; background: #fff; border: 1px solid #e8e8e8;
+    border-radius: 10px; padding: 12px 16px; color: #555;
+    font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+    text-align: left; display: flex; align-items: center; justify-content: space-between;
+    transition: all 0.15s; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .collapsible-trigger:hover { border-color: #999; color: #1a1a2e; }
+  .chevron { transition: transform 0.2s; font-size: 11px; }
   .collapsible-trigger.open .chevron { transform: rotate(180deg); }
+  .collapsible-trigger.open { border-radius: 10px 10px 0 0; border-bottom-color: transparent; margin-bottom: 0; }
+
   .collapsible-body {
-    display: none; background: var(--surface);
-    border: 1px solid var(--border); border-top: none;
-    border-radius: 0 0 var(--radius) var(--radius);
-    padding: 1.25rem; margin-bottom: 1rem;
+    display: none; background: #fafafa; border: 1px solid #e8e8e8;
+    border-top: none; border-radius: 0 0 10px 10px; padding: 16px; margin-bottom: 8px;
   }
   .collapsible-body.open { display: block; }
-  .save-btn { width: 100%; padding: 9px 14px; font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); cursor: pointer; transition: all 0.15s; margin-top: 0.25rem; }
-  .save-btn:hover { background: var(--surface); border-color: var(--accent); }
-  .submit-btn { width: 100%; padding: 13px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; background: var(--accent); color: var(--accent-fg); border: none; border-radius: var(--radius); cursor: pointer; transition: opacity 0.15s, transform 0.1s; margin-top: 0.25rem; }
-  .submit-btn:hover { opacity: 0.88; }
-  .submit-btn:active { transform: scale(0.99); }
+  .collapsible-body .field { margin-bottom: 12px; }
+
+  .save-btn {
+    width: 100%; padding: 10px; border: none; border-radius: 8px;
+    color: #fff; font-size: 13px; font-weight: 600; font-family: inherit;
+    cursor: pointer; margin-top: 4px; transition: background 0.2s;
+  }
+  .save-btn.dark { background: #1a1a2e; }
+  .save-btn.dark:hover { background: #2d2d50; }
+  .save-btn.amber { background: #d97706; }
+  .save-btn.amber:hover { background: #b45309; }
+
+  .submit-btn {
+    width: 100%; padding: 15px; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: all 0.2s; margin-top: 6px; color: #fff;
+  }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--accent); color: #fff; padding: 11px 20px; border-radius: 999px; font-size: 13px; font-weight: 500; z-index: 100; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; }
+  .submit-btn.dark { background: #1a1a2e; }
+  .submit-btn.dark:hover:not(:disabled) { background: #2d2d50; }
+  .submit-btn.green { background: #16a34a; }
+  .submit-btn.green:hover:not(:disabled) { background: #15803d; }
+  .submit-btn.amber { background: #d97706; }
+  .submit-btn.amber:hover:not(:disabled) { background: #b45309; }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    color: #fff; border-radius: 50px; padding: 11px 22px;
+    font-size: 13px; font-weight: 600; z-index: 999;
+    transition: transform 0.3s ease; white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
   .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.error { background: var(--danger); }
-  .loading-overlay { position: fixed; inset: 0; background: rgba(245,244,240,0.8); align-items: center; justify-content: center; z-index: 50; display: none; }
-  .loading-overlay.on { display: flex; }
-  .spinner { width: 28px; height: 28px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spacer { height: 0.75rem; }
+  .toast.success { background: #16a34a; }
+  .toast.error { background: #dc2626; }
+  .toast.amber { background: #d97706; }
+
+  .loading-bar {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: #1a1a2e; width: 0%; transition: width 0.3s;
+    z-index: 9999; border-radius: 0 2px 2px 0;
+  }
+
+  .section-note { font-size: 12px; color: #888; line-height: 1.6; margin-bottom: 12px; }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="header-inner">
-    <div>
-      <div class="app-title">Parts Manager</div>
-      <div class="app-subtitle">Wholesale Entry System</div>
+<div class="loading-bar" id="loadingBar"></div>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-brand">
+      <div class="logo">⚙️</div>
+      <div>
+        <div class="header-title">Parts Manager</div>
+        <div class="header-sub">Wholesale Entry System</div>
+      </div>
     </div>
-    <div style="font-size:12px;color:var(--text-muted)"><span class="status-dot"></span>Live</div>
+    <div class="live-badge"><div class="live-dot"></div> Live</div>
   </div>
-</header>
-
-<div class="container">
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('sale')">Sale Entry</button>
-    <button class="tab-btn" onclick="switchTab('restock')">Restock Entry</button>
+    <div class="tab active-sale" id="tab-sale" onclick="switchTab('sale')">Sale Entry</div>
+    <div class="tab" id="tab-restock" onclick="switchTab('restock')">Restock Entry</div>
+    <div class="tab" id="tab-payment" onclick="switchTab('payment')">Payment</div>
   </div>
+</div>
 
-  <!-- SALE TAB -->
-  <div id="sale-tab">
+<div class="content">
+
+  <!-- ══ SALE ══ -->
+  <div class="panel active" id="panel-sale">
     <div class="card">
-      <div class="card-title">Visit details</div>
-      <div class="field-row">
-        <div class="field">
+      <div class="card-title">Visit Details</div>
+      <div class="two-col" style="margin-bottom:14px;">
+        <div class="field" style="margin-bottom:0">
           <label>Date</label>
-          <input type="date" id="sale-date" />
+          <input type="date" id="sale-date">
         </div>
-        <div class="field">
+        <div class="field" style="margin-bottom:0">
           <label>Visit number</label>
           <select id="sale-visit">
             <option>1st Visit</option><option>2nd Visit</option><option>3rd Visit</option>
           </select>
         </div>
       </div>
-      <div class="field" style="margin-bottom:0">
+      <div class="field">
         <label>Shop owner</label>
         <div class="search-wrap">
-          <input class="search-input" id="shop-search" data-value="" placeholder="Type to search shop..." autocomplete="off" />
-          <div class="search-dropdown" id="shop-drop"></div>
+          <input type="text" id="sale-shop-s" placeholder="Type to search shop..." autocomplete="off"
+            oninput="fsearch('sale-shop-s','sale-shop-dd',shops)"
+            onfocus="osearch('sale-shop-s','sale-shop-dd',shops)"
+            onblur="dclose('sale-shop-dd')">
+          <div class="dropdown-list" id="sale-shop-dd"></div>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Parts sold</div>
-      <div id="parts-container"></div>
-      <button class="add-part-btn" onclick="addPartRow()">+ Add another part</button>
-      <div class="bill-total">
-        <span class="bill-total-label">Total bill amount</span>
-        <span class="bill-total-amount" id="bill-total">PKR 0</span>
+      <div class="card-title">Parts Sold</div>
+      <div id="part-rows"></div>
+      <button class="add-part-btn" onclick="addRow()">+ Add another part</button>
+      <div class="bill-total-bar dark">
+        <div class="bill-total-label">Total bill amount</div>
+        <div class="bill-total-amount" id="bill-total">PKR 0</div>
       </div>
     </div>
 
-    <!-- Collapsible: Add new shop -->
-    <button class="collapsible-trigger" id="shop-trigger" onclick="toggleCollapsible('shop')">
-      <span class="trigger-left">
-        <span class="trigger-icon">+</span>
-        <span>Add new shop</span>
-      </span>
-      <span class="chevron">▼</span>
+    <button class="collapsible-trigger" onclick="tog('ns-body',this)">
+      <span>+ Add new shop</span><span class="chevron">▼</span>
     </button>
-    <div class="collapsible-body" id="shop-body">
-      <div class="field">
-        <label>Shop name</label>
-        <input type="text" id="new-shop" placeholder="e.g. Al-Madina Motors" />
+    <div class="collapsible-body" id="ns-body">
+      <div class="field"><label>Shop Name</label><input type="text" id="ns-name" placeholder="Shop name"></div>
+      <div class="two-col">
+        <div class="field"><label>Location</label><input type="text" id="ns-loc" placeholder="City / Area"></div>
+        <div class="field"><label>Contact No.</label><input type="tel" id="ns-contact" placeholder="03XX-XXXXXXX"></div>
       </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Location</label>
-          <input type="text" id="new-shop-location" placeholder="e.g. Lahore" />
-        </div>
-        <div class="field">
-          <label>Contact number</label>
-          <input type="text" id="new-shop-contact" placeholder="0300-0000000" />
-        </div>
-      </div>
-      <button class="save-btn" onclick="addNewShop()">Save new shop</button>
+      <div class="field"><label>Opening Balance (PKR)</label><input type="number" id="ns-bal" placeholder="0 if none" min="0"></div>
+      <button class="save-btn dark" onclick="saveShop()">Save Shop</button>
     </div>
 
-    <div class="spacer"></div>
-
-    <!-- Collapsible: Add new part -->
-    <button class="collapsible-trigger" id="part-trigger" onclick="toggleCollapsible('part')">
-      <span class="trigger-left">
-        <span class="trigger-icon">+</span>
-        <span>Add new part</span>
-      </span>
-      <span class="chevron">▼</span>
+    <button class="collapsible-trigger" onclick="tog('np-body',this)">
+      <span>+ Add new part</span><span class="chevron">▼</span>
     </button>
-    <div class="collapsible-body" id="part-body">
-      <div class="field-row">
+    <div class="collapsible-body" id="np-body">
+      <div class="field"><label>Part Name</label><input type="text" id="np-name" placeholder="Part name"></div>
+      <div class="two-col">
         <div class="field">
-          <label>Part name</label>
-          <input type="text" id="new-part" placeholder="e.g. Clutch Wire" />
-        </div>
-        <div class="field">
-          <label>Price condition</label>
-          <select id="new-part-condition">
+          <label>Price Condition</label>
+          <select id="np-cond">
             <option value="PC">PC (Per Unit)</option>
-            <option value="Dozen">Dozen (12 units)</option>
+            <option value="Dozen">Dozen (12)</option>
             <option value="Packet">Packet</option>
             <option value="Set">Set</option>
           </select>
         </div>
+        <div class="field"><label>Model</label><input type="text" id="np-model" placeholder="CD70 / CG125 / Common"></div>
       </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Maker name</label>
-          <input type="text" id="new-part-maker" placeholder="Maker / brand" />
-        </div>
-        <div class="field">
-          <label>Maker city</label>
-          <input type="text" id="new-part-city" placeholder="e.g. Sialkot" />
-        </div>
+      <div class="field"><label>Maker Name</label><input type="text" id="np-maker" placeholder="Manufacturer name"></div>
+      <div class="two-col">
+        <div class="field"><label>Maker City</label><input type="text" id="np-city" placeholder="City"></div>
+        <div class="field"><label>Maker Contact</label><input type="tel" id="np-mc" placeholder="Contact no."></div>
       </div>
-      <div class="field">
-        <label>Maker contact</label>
-        <input type="text" id="new-part-contact" placeholder="0300-0000000" />
-      </div>
-      <button class="save-btn" onclick="addNewPart()">Save new part</button>
+      <button class="save-btn dark" onclick="savePart()">Save Part</button>
     </div>
 
-    <div class="spacer"></div>
-    <button class="submit-btn" id="sale-submit-btn" onclick="submitSale()">Submit Sale Entry</button>
+    <button class="submit-btn dark" onclick="submitSale()">Submit Sale Entry</button>
   </div>
 
-  <!-- RESTOCK TAB -->
-  <div id="restock-tab" style="display:none">
+  <!-- ══ RESTOCK ══ -->
+  <div class="panel" id="panel-restock">
     <div class="card">
-      <div class="card-title">Restock details</div>
+      <div class="card-title">Restock Details</div>
+      <div class="field"><label>Date</label><input type="date" id="re-date"></div>
+
       <div class="field">
-        <label>Date</label>
-        <input type="date" id="restock-date" />
-      </div>
-      <div class="field">
-        <label>Part name</label>
+        <label>Part Name</label>
         <div class="search-wrap">
-          <input class="search-input" id="restock-search" data-value="" placeholder="Type to search part..." autocomplete="off" />
-          <div class="search-dropdown" id="restock-drop"></div>
+          <input type="text" id="re-part-s" placeholder="Type to search part..." autocomplete="off"
+            oninput="fsearch('re-part-s','re-part-dd',parts)"
+            onfocus="osearch('re-part-s','re-part-dd',parts)"
+            onblur="dclose('re-part-dd')"
+            onchange="autofillRestock(this.value)">
+          <div class="dropdown-list" id="re-part-dd"></div>
         </div>
       </div>
-      <div class="field-row">
+
+      <div class="two-col">
         <div class="field">
-          <label>Quantity purchased</label>
-          <input type="number" id="restock-qty" placeholder="0" min="0" />
+          <label>Price Condition</label>
+          <select id="re-condition">
+            <option value="PC">PC (Per Unit)</option>
+            <option value="Dozen">Dozen (12)</option>
+            <option value="Packet">Packet</option>
+            <option value="Set">Set</option>
+          </select>
         </div>
-        <div class="field">
-          <label>Cost price/unit (PKR)</label>
-          <input type="number" id="restock-price" placeholder="0" min="0" />
-        </div>
+        <div class="field"><label>Model</label><input type="text" id="re-model" placeholder="CD70 / CG125 / Common"></div>
       </div>
-      <div class="field" style="margin-bottom:0">
-        <label>Supplier name (optional)</label>
-        <input type="text" id="restock-supplier" placeholder="Supplier name" />
+
+      <div class="field"><label>Maker Name</label><input type="text" id="re-maker" placeholder="Manufacturer name"></div>
+      <div class="two-col">
+        <div class="field"><label>Maker City</label><input type="text" id="re-city" placeholder="City"></div>
+        <div class="field"><label>Maker Contact</label><input type="tel" id="re-mc" placeholder="Contact no."></div>
+      </div>
+
+      <div style="height:1px;background:#f0f0f0;margin:4px 0 14px;"></div>
+
+      <div class="two-col">
+        <div class="field"><label>Quantity</label><input type="number" id="re-qty" placeholder="0" min="1" oninput="calcRe()"></div>
+        <div class="field"><label>Cost Price/Unit (PKR)</label><input type="number" id="re-price" placeholder="0" oninput="calcRe()"></div>
+      </div>
+      <div class="field"><label>Supplier <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="re-supplier" placeholder="Supplier name"></div>
+
+      <div class="bill-total-bar green" style="margin-top:4px;">
+        <div class="bill-total-label">Total Cost</div>
+        <div class="bill-total-amount" id="re-total">PKR 0</div>
       </div>
     </div>
-    <button class="submit-btn" id="restock-submit-btn" onclick="submitRestock()">Submit Restock Entry</button>
+    <button class="submit-btn green" onclick="submitRestock()">Submit Restock Entry</button>
+  </div>
+
+  <!-- ══ PAYMENT ══ -->
+  <div class="panel" id="panel-payment">
+    <div class="card">
+      <div class="card-title">Payment Received</div>
+      <div class="field"><label>Date</label><input type="date" id="pay-date"></div>
+      <div class="field">
+        <label>Shop Owner</label>
+        <div class="search-wrap">
+          <input type="text" id="pay-shop-s" placeholder="Type to search shop..." autocomplete="off"
+            oninput="fsearch('pay-shop-s','pay-shop-dd',shops)"
+            onfocus="osearch('pay-shop-s','pay-shop-dd',shops)"
+            onblur="dclose('pay-shop-dd')">
+          <div class="dropdown-list" id="pay-shop-dd"></div>
+        </div>
+      </div>
+      <div class="field"><label>Amount Received (PKR)</label><input type="number" id="pay-amount" placeholder="Enter amount" min="1"></div>
+      <div class="field"><label>Notes <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="pay-notes" placeholder="e.g. cash, cheque, partial payment..."></div>
+    </div>
+    <button class="submit-btn amber" onclick="submitPayment()">Record Payment Received</button>
+
+    <button class="collapsible-trigger" onclick="tog('ob-body',this)" style="margin-top:14px;">
+      <span>+ Set Opening Balance for a Shop</span><span class="chevron">▼</span>
+    </button>
+    <div class="collapsible-body" id="ob-body">
+      <p class="section-note">Use this <strong>once per shop</strong> to enter how much they already owed before this system started. Only needs to be done one time per shop.</p>
+      <div class="field">
+        <label>Shop</label>
+        <div class="search-wrap">
+          <input type="text" id="ob-shop-s" placeholder="Type to search shop..." autocomplete="off"
+            oninput="fsearch('ob-shop-s','ob-shop-dd',shops)"
+            onfocus="osearch('ob-shop-s','ob-shop-dd',shops)"
+            onblur="dclose('ob-shop-dd')">
+          <div class="dropdown-list" id="ob-shop-dd"></div>
+        </div>
+      </div>
+      <div class="field"><label>Opening Balance (PKR)</label><input type="number" id="ob-amount" placeholder="Current outstanding amount" min="0"></div>
+      <button class="save-btn amber" onclick="saveOB()">Save Opening Balance</button>
+    </div>
   </div>
 </div>
 
-<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqM7TK0rbS_HbyDFO9F6oH9wC_aZh028H-oqA2bjSIAdy833nTn1xyWU6Icrp6OkLu_Q/exec";
-let shops = [], parts = [], partCount = 0;
+const URL = "https://script.google.com/macros/s/AKfycbxqM7TK0rbS_HbyDFO9F6oH9wC_aZh028H-oqA2bjSIAdy833nTn1xyWU6Icrp6OkLu_Q/exec";
+let shops = [], parts = [], partsData = {}, rc = 0;
+// partsData = { "Brake Pad CD70": { condition:"PC", model:"CD70", maker:"XYZ", city:"Lahore", contact:"..." } }
 
-function today() { return new Date().toISOString().split('T')[0]; }
-document.getElementById('sale-date').value = today();
-document.getElementById('restock-date').value = today();
+window.addEventListener('DOMContentLoaded', () => {
+  const t = new Date().toISOString().split('T')[0];
+  ['sale-date','re-date','pay-date'].forEach(id => { const el = document.getElementById(id); if(el) el.value = t; });
+  fetchData();
+  addRow();
+});
 
-async function loadData() {
+async function fetchData() {
   try {
-    const res = await fetch(SCRIPT_URL + "?type=get_data");
-    const data = await res.json();
-    shops = data.shops || [];
-    parts = data.parts || [];
-  } catch(e) {
-    shops = ["Al-Madina Motors","Raja Spare Parts","Bismillah Traders","Ahmed Auto Store","Khan Parts House"];
-    parts = ["Brake Pad","Clutch Wire","Spark Plug","Chain","Headlight Bulb","Seat Cover","Tire","Shock Absorber","Air Filter","Side Mirror"];
-  }
-  initShopSearch();
-  initRestockSearch();
-  addPartRow();
-}
-
-// --- Generic searchable dropdown ---
-function makeSearchable(inputId, dropdownId, listFn, onSelect) {
-  const input = document.getElementById(inputId);
-  const dropdown = document.getElementById(dropdownId);
-  if(!input || !dropdown) return;
-  function render(filter) {
-    const q = (filter||'').toLowerCase();
-    const list = listFn();
-    const filtered = q ? list.filter(p => p.toLowerCase().includes(q)) : list;
-    dropdown.innerHTML = '';
-    if(!filtered.length) { dropdown.innerHTML = '<div class="no-res">No results found</div>'; return; }
-    filtered.forEach(p => {
-      const div = document.createElement('div');
-      div.className = 'search-opt' + (input.dataset.value===p?' chosen':'');
-      div.textContent = p;
-      div.onmousedown = () => { input.value=p; input.dataset.value=p; dropdown.classList.remove('open'); if(onSelect) onSelect(p); };
-      dropdown.appendChild(div);
+    const r = await fetch(URL + '?type=get_data');
+    const d = await r.json();
+    shops = d.shops || [];
+    parts = d.parts || [];
+    partsData = {};
+    (d.partsDetail || []).forEach(function(p) {
+      if (p.name) partsData[p.name] = p;
     });
+  } catch(e) {}
+}
+
+// Tabs
+function switchTab(name) {
+  ['sale','restock','payment'].forEach(t => {
+    document.getElementById('panel-'+t).classList.remove('active');
+    document.getElementById('tab-'+t).className = 'tab';
+  });
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('tab-'+name).className = 'tab active-'+name;
+}
+
+// Search dropdown
+function fsearch(inId, ddId, arr) {
+  const q = document.getElementById(inId).value.toLowerCase();
+  renderDD(ddId, arr.filter(i => i.toLowerCase().includes(q)), inId);
+  document.getElementById(ddId).classList.add('open');
+}
+function osearch(inId, ddId, arr) {
+  const q = document.getElementById(inId).value.toLowerCase();
+  renderDD(ddId, (q ? arr.filter(i => i.toLowerCase().includes(q)) : arr).slice(0,40), inId);
+  document.getElementById(ddId).classList.add('open');
+}
+function renderDD(ddId, items, inId) {
+  const dd = document.getElementById(ddId);
+  dd.innerHTML = items.length
+    ? items.map(item => `<div class="dropdown-item" onmousedown="pick('${inId}','${ddId}','${item.replace(/'/g,"\\'")}'">${item}</div>`).join('')
+    : '<div class="dropdown-item no-match">No matches found</div>';
+}
+function pick(inId, ddId, val) {
+  document.getElementById(inId).value = val;
+  document.getElementById(ddId).classList.remove('open');
+  // Auto-fill restock fields when a part is picked
+  if (inId === 're-part-s') autofillRestock(val);
+}
+function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 200); }
+
+// Auto-fill restock fields from stored parts data
+function autofillRestock(partName) {
+  const d = partsData[partName];
+  if (!d) return;
+  if (d.condition) {
+    const sel = document.getElementById('re-condition');
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === d.condition) { sel.selectedIndex = i; break; }
+    }
   }
-  input.addEventListener('focus', () => { render(input.value); dropdown.classList.add('open'); });
-  input.addEventListener('input', () => { render(input.value); dropdown.classList.add('open'); input.dataset.value=''; });
-  input.addEventListener('blur', () => setTimeout(()=>dropdown.classList.remove('open'), 150));
-  render('');
-  return render;
+  if (d.model) document.getElementById('re-model').value = d.model;
+  if (d.maker) document.getElementById('re-maker').value = d.maker;
+  if (d.city)  document.getElementById('re-city').value  = d.city;
+  if (d.contact) document.getElementById('re-mc').value  = d.contact;
+  if (d.supplier) document.getElementById('re-supplier').value = d.supplier;
 }
 
-function initShopSearch() {
-  makeSearchable('shop-search', 'shop-drop', ()=>shops, null);
+// Part row search (dynamic)
+function fpart(inId, ddId) {
+  const q = document.getElementById(inId).value.toLowerCase();
+  renderDD(ddId, parts.filter(p => p.toLowerCase().includes(q)), inId);
+  document.getElementById(ddId).classList.add('open');
+}
+function opart(inId, ddId) {
+  const q = document.getElementById(inId).value.toLowerCase();
+  renderDD(ddId, (q ? parts.filter(p => p.toLowerCase().includes(q)) : parts).slice(0,40), inId);
+  document.getElementById(ddId).classList.add('open');
 }
 
-function initRestockSearch() {
-  makeSearchable('restock-search', 'restock-drop', ()=>parts, null);
-}
-
-// --- Collapsible ---
-function toggleCollapsible(key) {
-  const trigger = document.getElementById(key+'-trigger');
-  const body = document.getElementById(key+'-body');
-  const isOpen = body.classList.contains('open');
-  trigger.classList.toggle('open', !isOpen);
-  body.classList.toggle('open', !isOpen);
-}
-
-// --- Part rows ---
-function addPartRow(preselect) {
-  partCount++;
-  const id = partCount;
+// Part rows
+function addRow() {
+  rc++;
+  const i = rc;
   const div = document.createElement('div');
-  div.className = 'part-row'; div.id = 'pr-'+id;
+  div.className = 'part-row'; div.id = 'pr-'+i;
   div.innerHTML = `
-    <div class="part-row-top">
-      <span class="part-number">PART ${String(id).padStart(2,'0')}</span>
-      ${id>1?`<button class="remove-part" onclick="removePartRow(${id})">Remove</button>`:''}
+    <div class="part-row-header">
+      <div class="part-row-num">Part ${String(i).padStart(2,'0')}</div>
+      ${i>1?`<button class="remove-btn" onclick="remRow(${i})">✕ Remove</button>`:''}
     </div>
-    <div class="field">
+    <div class="field" style="margin-bottom:10px;">
       <label>Part name</label>
       <div class="search-wrap">
-        <input class="search-input" id="psearch-${id}" data-value="" placeholder="Type to search part..." autocomplete="off" />
-        <div class="search-dropdown" id="pdrop-${id}"></div>
+        <input type="text" id="ps-${i}" placeholder="Type to search part..." autocomplete="off"
+          oninput="fpart('ps-${i}','pd-${i}')"
+          onfocus="opart('ps-${i}','pd-${i}')"
+          onblur="setTimeout(()=>document.getElementById('pd-${i}').classList.remove('open'),200)">
+        <div class="dropdown-list" id="pd-${i}"></div>
       </div>
     </div>
-    <div class="two-col">
-      <div class="field" style="margin-bottom:0"><label>Quantity</label><input type="number" id="pqty-${id}" placeholder="0" min="0" oninput="calcRowTotal(${id})" /></div>
-      <div class="field" style="margin-bottom:0"><label>Price/unit (PKR)</label><input type="number" id="pprice-${id}" placeholder="0" min="0" oninput="calcRowTotal(${id})" /></div>
+    <div class="part-grid">
+      <div class="field"><label>Quantity</label><input type="number" id="pq-${i}" placeholder="0" min="1" oninput="calcRow(${i})"></div>
+      <div class="field"><label>Price/unit (PKR)</label><input type="number" id="pp-${i}" placeholder="0" oninput="calcRow(${i})"></div>
     </div>
-    <div class="part-total" id="ptotal-${id}">Total: PKR 0</div>`;
-  document.getElementById('parts-container').appendChild(div);
-  makeSearchable('psearch-'+id, 'pdrop-'+id, ()=>parts, ()=>calcTotal());
-  if(preselect) { document.getElementById('psearch-'+id).value=preselect; document.getElementById('psearch-'+id).dataset.value=preselect; }
-  calcTotal();
+    <div class="row-total">Total: <span id="pt-${i}">PKR 0</span></div>
+  `;
+  document.getElementById('part-rows').appendChild(div);
 }
 
-function removePartRow(id) { const el=document.getElementById('pr-'+id); if(el) el.remove(); calcTotal(); }
+function remRow(i) { document.getElementById('pr-'+i)?.remove(); calcBill(); }
 
-function calcRowTotal(id) {
-  const qty=parseFloat(document.getElementById('pqty-'+id)?.value)||0;
-  const price=parseFloat(document.getElementById('pprice-'+id)?.value)||0;
-  const el=document.getElementById('ptotal-'+id);
-  if(el) el.textContent='Total: PKR '+Math.round(qty*price).toLocaleString();
-  calcTotal();
+function calcRow(i) {
+  const q = parseFloat(document.getElementById('pq-'+i)?.value)||0;
+  const p = parseFloat(document.getElementById('pp-'+i)?.value)||0;
+  const el = document.getElementById('pt-'+i);
+  if(el) el.textContent = 'PKR '+(q*p).toLocaleString();
+  calcBill();
 }
 
-function calcTotal() {
-  let total=0;
-  document.querySelectorAll('.part-row').forEach(row=>{
-    const id=row.id.split('-')[1];
-    total+=(parseFloat(document.getElementById('pqty-'+id)?.value)||0)*(parseFloat(document.getElementById('pprice-'+id)?.value)||0);
+function calcBill() {
+  let t = 0;
+  document.querySelectorAll('[id^="pq-"]').forEach(el => {
+    const i = el.id.replace('pq-','');
+    t += (parseFloat(el.value)||0)*(parseFloat(document.getElementById('pp-'+i)?.value)||0);
   });
-  document.getElementById('bill-total').textContent='PKR '+Math.round(total).toLocaleString();
+  document.getElementById('bill-total').textContent = 'PKR '+t.toLocaleString();
 }
 
-// --- Add new shop ---
-async function addNewShop() {
-  const name=document.getElementById('new-shop').value.trim();
-  const location=document.getElementById('new-shop-location').value.trim();
-  const contact=document.getElementById('new-shop-contact').value.trim();
-  if(!name){showToast('Please enter a shop name',true);return;}
-  shops.push(name);
-  document.getElementById('shop-search').value=name;
-  document.getElementById('shop-search').dataset.value=name;
-  ['new-shop','new-shop-location','new-shop-contact'].forEach(id=>document.getElementById(id).value='');
-  toggleCollapsible('shop');
-  showToast('Shop added: '+name);
-  try{await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({type:'new_shop',name,location,contact})});}catch(e){}
+function calcRe() {
+  const q = parseFloat(document.getElementById('re-qty').value)||0;
+  const p = parseFloat(document.getElementById('re-price').value)||0;
+  document.getElementById('re-total').textContent = 'PKR '+(q*p).toLocaleString();
 }
 
-// --- Add new part ---
-async function addNewPart() {
-  const name=document.getElementById('new-part').value.trim();
-  const condition=document.getElementById('new-part-condition').value;
-  const maker=document.getElementById('new-part-maker').value.trim();
-  const city=document.getElementById('new-part-city').value.trim();
-  const contact=document.getElementById('new-part-contact').value.trim();
-  if(!name){showToast('Please enter a part name',true);return;}
-  parts.push(name);
-  initRestockSearch();
-  ['new-part','new-part-maker','new-part-city','new-part-contact'].forEach(id=>document.getElementById(id).value='');
-  toggleCollapsible('part');
-  showToast('Part added: '+name);
-  try{await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({type:'new_part',name,condition,maker,city,contact})});}catch(e){}
+// Collapsible
+function tog(id, btn) {
+  document.getElementById(id).classList.toggle('open');
+  btn.classList.toggle('open');
 }
 
-// --- Submit sale ---
+// Loading
+function sLoad() { document.getElementById('loadingBar').style.width='70%'; }
+function eLoad() { const b=document.getElementById('loadingBar'); b.style.width='100%'; setTimeout(()=>b.style.width='0%',400); }
+
+// Toast
+function toastMsg(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = (type==='success'?'✓ ':type==='amber'?'⚠ ':'✕ ')+msg;
+  el.className = 'toast '+type; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 3500);
+}
+
+async function post(payload) {
+  const r = await fetch(URL, { method:'POST', body:JSON.stringify(payload) });
+  return r.json();
+}
+
+// Submit Sale
 async function submitSale() {
-  const date=document.getElementById('sale-date').value;
-  const shop=document.getElementById('shop-search').dataset.value;
-  const visit=document.getElementById('sale-visit').value;
-  if(!date||!shop){showToast('Please select date and shop owner',true);return;}
-  const rows=[]; let valid=true;
-  document.querySelectorAll('.part-row').forEach(row=>{
-    const id=row.id.split('-')[1];
-    const part=document.getElementById('psearch-'+id)?.dataset.value;
-    const qty=parseFloat(document.getElementById('pqty-'+id)?.value)||0;
-    const price=parseFloat(document.getElementById('pprice-'+id)?.value)||0;
-    if(!part){valid=false;return;}
-    if(qty>0) rows.push({part,qty,price});
+  const date = document.getElementById('sale-date').value;
+  const shop = document.getElementById('sale-shop-s').value.trim();
+  const visit = document.getElementById('sale-visit').value;
+  if(!date||!shop){ toastMsg('Fill Date and Shop','error'); return; }
+  const rows = [];
+  document.querySelectorAll('[id^="pq-"]').forEach(el => {
+    const i = el.id.replace('pq-','');
+    const part = document.getElementById('ps-'+i)?.value.trim();
+    const qty = parseFloat(el.value);
+    const price = parseFloat(document.getElementById('pp-'+i)?.value);
+    if(part&&qty>0&&!isNaN(price)) rows.push({part,qty,price});
   });
-  if(!valid){showToast('Please select all part names',true);return;}
-  if(!rows.length){showToast('Please add at least one part',true);return;}
-  setLoading(true);
-  try{
-    await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({type:'sale',date,shop,visit,rows})});
-    showToast('Sale submitted successfully!'); resetSaleForm();
-  }catch(e){showToast('Submission failed. Check internet.',true);}
-  setLoading(false);
+  if(!rows.length){ toastMsg('Add at least one part','error'); return; }
+  const btn=document.querySelector('.submit-btn.dark'); btn.disabled=true; sLoad();
+  try {
+    await post({type:'sale',date,shop,visit,rows});
+    toastMsg('Sale entry saved!');
+    document.getElementById('sale-shop-s').value='';
+    document.getElementById('sale-visit').value='1st Visit';
+    document.getElementById('part-rows').innerHTML=''; rc=0; addRow(); calcBill();
+    document.getElementById('sale-date').value=new Date().toISOString().split('T')[0];
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
+  btn.disabled=false; eLoad();
 }
 
-// --- Submit restock ---
+// Submit Restock
 async function submitRestock() {
-  const date=document.getElementById('restock-date').value;
-  const part=document.getElementById('restock-search').dataset.value;
-  const qty=parseFloat(document.getElementById('restock-qty').value)||0;
-  const price=parseFloat(document.getElementById('restock-price').value)||0;
-  const supplier=document.getElementById('restock-supplier').value;
-  if(!date||!part||!qty||!price){showToast('Please fill all required fields',true);return;}
-  setLoading(true);
-  try{
-    await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({type:'restock',date,part,qty,price,supplier})});
-    showToast('Restock submitted successfully!');
-    ['restock-qty','restock-price','restock-supplier'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('restock-search').value='';
-    document.getElementById('restock-search').dataset.value='';
-  }catch(e){showToast('Submission failed. Check internet.',true);}
-  setLoading(false);
+  const date=document.getElementById('re-date').value;
+  const part=document.getElementById('re-part-s').value.trim();
+  const qty=parseFloat(document.getElementById('re-qty').value);
+  const price=parseFloat(document.getElementById('re-price').value);
+  const condition=document.getElementById('re-condition').value;
+  const model=document.getElementById('re-model').value.trim();
+  const maker=document.getElementById('re-maker').value.trim();
+  const city=document.getElementById('re-city').value.trim();
+  const contact=document.getElementById('re-mc').value.trim();
+  const supplier=document.getElementById('re-supplier').value.trim();
+  if(!date||!part||!qty||isNaN(price)){ toastMsg('Fill Part, Quantity and Price','error'); return; }
+  const btn=document.querySelector('.submit-btn.green'); btn.disabled=true; sLoad();
+  try {
+    await post({type:'restock',date,part,qty,price,condition,model,maker,city,contact,supplier});
+    toastMsg('Restock saved!');
+    ['re-part-s','re-qty','re-price','re-model','re-maker','re-city','re-mc','re-supplier'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('re-condition').selectedIndex=0;
+    document.getElementById('re-total').textContent='PKR 0';
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
+  btn.disabled=false; eLoad();
 }
 
-function resetSaleForm() {
-  document.getElementById('shop-search').value='';
-  document.getElementById('shop-search').dataset.value='';
-  document.getElementById('sale-visit').value='1st Visit';
-  document.getElementById('sale-date').value=today();
-  document.getElementById('parts-container').innerHTML='';
-  partCount=0; addPartRow();
+// Submit Payment
+async function submitPayment() {
+  const date=document.getElementById('pay-date').value;
+  const shop=document.getElementById('pay-shop-s').value.trim();
+  const amount=parseFloat(document.getElementById('pay-amount').value);
+  const notes=document.getElementById('pay-notes').value.trim();
+  if(!date||!shop||!amount||amount<=0){ toastMsg('Fill Date, Shop and Amount','error'); return; }
+  const btn=document.querySelector('.submit-btn.amber'); btn.disabled=true; sLoad();
+  try {
+    await post({type:'payment',date,shop,amount,notes});
+    toastMsg('Payment recorded!');
+    ['pay-shop-s','pay-amount','pay-notes'].forEach(id=>document.getElementById(id).value='');
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
+  btn.disabled=false; eLoad();
 }
 
-function switchTab(tab) {
-  document.getElementById('sale-tab').style.display=tab==='sale'?'block':'none';
-  document.getElementById('restock-tab').style.display=tab==='restock'?'block':'none';
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(tab==='sale'&&i===0)||(tab==='restock'&&i===1)));
+// Opening Balance
+async function saveOB() {
+  const shop=document.getElementById('ob-shop-s').value.trim();
+  const amount=parseFloat(document.getElementById('ob-amount').value);
+  if(!shop||isNaN(amount)||amount<0){ toastMsg('Enter shop and amount','error'); return; }
+  sLoad();
+  try {
+    await post({type:'opening_balance',shop,amount});
+    toastMsg('Opening balance saved for '+shop+'!','amber');
+    document.getElementById('ob-shop-s').value='';
+    document.getElementById('ob-amount').value='';
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
+  eLoad();
 }
 
-function setLoading(on) {
-  document.getElementById('loading').className='loading-overlay'+(on?' on':'');
-  document.getElementById('sale-submit-btn').disabled=on;
-  document.getElementById('restock-submit-btn').disabled=on;
+// New Shop
+async function saveShop() {
+  const name=document.getElementById('ns-name').value.trim();
+  const location=document.getElementById('ns-loc').value.trim();
+  const contact=document.getElementById('ns-contact').value.trim();
+  const balance=parseFloat(document.getElementById('ns-bal').value)||0;
+  if(!name){ toastMsg('Shop name required','error'); return; }
+  sLoad();
+  try {
+    await post({type:'new_shop',name,location,contact,balance});
+    if(balance>0) await post({type:'opening_balance',shop:name,amount:balance});
+    shops.push(name);
+    toastMsg(name+' added!');
+    ['ns-name','ns-loc','ns-contact','ns-bal'].forEach(id=>document.getElementById(id).value='');
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
+  eLoad();
 }
 
-let toastTimer;
-function showToast(msg,isError) {
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast'+(isError?' error':'');
-  clearTimeout(toastTimer);
-  setTimeout(()=>t.classList.add('show'),10);
-  toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
+// New Part
+async function savePart() {
+  const name=document.getElementById('np-name').value.trim();
+  const condition=document.getElementById('np-cond').value;
+  const model=document.getElementById('np-model').value.trim();
+  const maker=document.getElementById('np-maker').value.trim();
+  const city=document.getElementById('np-city').value.trim();
+  const contact=document.getElementById('np-mc').value.trim();
+  if(!name){ toastMsg('Part name required','error'); return; }
+  sLoad();
+  try {
+    await post({type:'new_part',name,condition,model,maker,city,contact});
+    parts.push(name);
+    toastMsg(name+' added!');
+    ['np-name','np-model','np-maker','np-city','np-mc'].forEach(id=>document.getElementById(id).value='');
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
+  eLoad();
 }
-
-loadData();
 </script>
 </body>
 </html>
