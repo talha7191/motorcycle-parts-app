@@ -506,6 +506,10 @@ function autofillRestock(partName) {
   document.getElementById('re-mc').value        = d.contact   || '';
   document.getElementById('re-model').value     = d.model     || '';
   document.getElementById('re-condition').value = d.condition || '';
+  if (d.unitPrice) {
+    document.getElementById('re-price').value   = d.unitPrice;
+    calcRe();
+  }
 }
 
 // Part row search (dynamic)
@@ -642,7 +646,7 @@ async function submitRestock() {
   try {
     await post({type:'restock',date,part,qty,price,condition,model,maker,city,contact,supplier});
     toastMsg('Restock saved!');
-    ['re-part-s','re-qty','re-price','re-model','re-maker','re-city','re-mc','re-supplier','re-condition'].forEach(id=>document.getElementById(id).value='');
+    ['re-part-s','re-qty','re-price','re-model','re-maker','re-city','re-mc','re-supplier','re-condition','re-price'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('re-total').textContent='PKR 0';
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
