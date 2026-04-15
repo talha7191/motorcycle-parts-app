@@ -143,15 +143,15 @@
   .add-part-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
 
   .bill-total-bar {
-    border-radius: 10px; padding: 14px 18px;
+    border-radius: 8px; padding: 10px 14px;
     display: flex; justify-content: space-between; align-items: center;
     color: #fff; margin-bottom: 0;
   }
   .bill-total-bar.dark { background: #1a1a2e; }
   .bill-total-bar.green { background: #16a34a; }
   .bill-total-bar.amber { background: #d97706; }
-  .bill-total-label { font-size: 13px; font-weight: 600; opacity: 0.8; }
-  .bill-total-amount { font-size: 20px; font-weight: 700; }
+  .bill-total-label { font-size: 12px; font-weight: 600; opacity: 0.8; }
+  .bill-total-amount { font-size: 15px; font-weight: 700; }
 
   /* COLLAPSIBLE */
   .collapsible-trigger {
@@ -184,9 +184,10 @@
   .save-btn.amber:hover { background: #b45309; }
 
   .submit-btn {
-    width: 100%; padding: 15px; border: none; border-radius: 10px;
-    font-size: 15px; font-weight: 700; font-family: inherit;
+    width: 100%; padding: 11px 16px; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 600; font-family: inherit;
     cursor: pointer; transition: all 0.2s; margin-top: 6px; color: #fff;
+    letter-spacing: 0.3px;
   }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .submit-btn.dark { background: #1a1a2e; }
@@ -504,25 +505,26 @@ function pick(inId, ddId, val) {
 function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 200); }
 
 // Auto-fill restock fields from stored parts data
-// Sheet column order: B=Part Name, C=Manufacturer Name, D=Manufacturer City, E=Manufacturer Contact, F=Model, G=Price Condition, H=Price Per Unit
+// ACTUAL sheet column order:
+// B=Part Name, C=Manufacturer Name, D=Manufacturer City, E=Manufacturer Contact, F=Model, G=Price Condition, H=Price Per Unit
 function autofillRestock(partName) {
   const d = partsData[partName];
   if (!d) return;
-  // Price Condition (G)
+  // Maker Name (C) → index 2
+  document.getElementById('re-maker').value = d.maker || '';
+  // Maker City (D) → index 3
+  document.getElementById('re-city').value = d.city || '';
+  // Maker Contact (E) → index 4
+  document.getElementById('re-mc').value = d.contact || '';
+  // Model (F) → index 5
+  document.getElementById('re-model').value = d.model || '';
+  // Price Condition (G) → index 6
   if (d.condition) {
     const sel = document.getElementById('re-condition');
     for (let i = 0; i < sel.options.length; i++) {
       if (sel.options[i].value === d.condition) { sel.selectedIndex = i; break; }
     }
   }
-  // Model (F)
-  if (d.model) document.getElementById('re-model').value = d.model;
-  // Maker Name (C)
-  if (d.maker) document.getElementById('re-maker').value = d.maker;
-  // Maker City (D)
-  if (d.city)  document.getElementById('re-city').value  = d.city;
-  // Maker Contact (E)
-  if (d.contact) document.getElementById('re-mc').value  = d.contact;
 }
 
 // Part row search (dynamic)
