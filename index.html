@@ -483,17 +483,31 @@ function osearch(inId, ddId, arr) {
 }
 function renderDD(ddId, items, inId) {
   const dd = document.getElementById(ddId);
-  dd.innerHTML = items.length
-    ? items.map(item => `<div class="dropdown-item" onmousedown="pick('${inId}','${ddId}','${item.replace(/'/g,"\\'")}'">${item}</div>`).join('')
-    : '<div class="dropdown-item no-match">No matches found</div>';
+  if (!items.length) {
+    dd.innerHTML = '<div class="dropdown-item no-match">No matches found</div>';
+    return;
+  }
+  dd.innerHTML = '';
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'dropdown-item';
+    div.textContent = item;
+    // Both mousedown (desktop) and touchstart (mobile)
+    const handler = (e) => {
+      e.preventDefault();
+      pick(inId, ddId, item);
+    };
+    div.addEventListener('mousedown', handler);
+    div.addEventListener('touchstart', handler, { passive: false });
+    dd.appendChild(div);
+  });
 }
 function pick(inId, ddId, val) {
   document.getElementById(inId).value = val;
   document.getElementById(ddId).classList.remove('open');
-  // Auto-fill restock fields when a part is picked
   if (inId === 're-part-s') autofillRestock(val);
 }
-function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 200); }
+function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 300); }
 
 // Auto-fill restock fields from stored parts data
 // Sheet: B=Part Name, C=Manufacturer Name, D=Manufacturer City,
@@ -541,7 +555,7 @@ function addRow() {
         <input type="text" id="ps-${i}" placeholder="Type to search part..." autocomplete="off"
           oninput="fpart('ps-${i}','pd-${i}')"
           onfocus="opart('ps-${i}','pd-${i}')"
-          onblur="setTimeout(()=>document.getElementById('pd-${i}').classList.remove('open'),200)">
+          onblur="setTimeout(()=>document.getElementById('pd-${i}').classList.remove('open'),300)">
         <div class="dropdown-list" id="pd-${i}"></div>
       </div>
     </div>
