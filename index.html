@@ -6,56 +6,20 @@
 <title>Parts Manager</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 40px; color: #1a1a2e; }
 
-  body {
-    background: #f0f2f5;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    min-height: 100vh;
-    padding-bottom: 40px;
-    color: #1a1a2e;
-  }
-
-  .header {
-    background: #fff;
-    border-bottom: 1px solid #e8e8e8;
-    padding: 0 20px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  }
-
-  .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 0 12px;
-  }
-
+  .header { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 0 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 12px; }
   .header-brand { display: flex; align-items: center; gap: 10px; }
-
-  .logo {
-    width: 34px; height: 34px;
-    background: #1a1a2e;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-
+  .logo { width: 34px; height: 34px; background: #1a1a2e; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
   .header-title { font-size: 16px; font-weight: 700; color: #1a1a2e; }
   .header-sub { font-size: 11px; color: #999; }
-
   .live-badge { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #22c55e; font-weight: 600; }
   .live-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
   .tabs { display: flex; border-top: 1px solid #f0f0f0; gap: 4px; padding: 0 4px; }
-  .tab {
-    flex: 1; padding: 8px 6px; text-align: center;
-    font-size: 11px; font-weight: 700; color: #999; letter-spacing: 0.3px;
-    border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s;
-    text-transform: uppercase;
-  }
+  .tab { flex: 1; padding: 8px 6px; text-align: center; font-size: 11px; font-weight: 700; color: #999; letter-spacing: 0.3px; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
   .tab:hover { color: #555; }
   .tab.active-sale { color: #1a1a2e; border-bottom-color: #1a1a2e; }
   .tab.active-restock { color: #16a34a; border-bottom-color: #16a34a; }
@@ -65,130 +29,76 @@
   .panel { display: none; }
   .panel.active { display: block; }
 
-  .card {
-    background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;
-    padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-
-  .card-title {
-    font-size: 11px; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; color: #999; margin-bottom: 14px;
-  }
+  .card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .card-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #999; margin-bottom: 14px; }
 
   .field { margin-bottom: 14px; }
   .field:last-child { margin-bottom: 0; }
-
   label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
 
   input[type="text"], input[type="number"], input[type="tel"], input[type="date"], select {
-    width: 100%; background: #fafafa; border: 1px solid #e0e0e0;
-    border-radius: 8px; padding: 10px 12px; color: #1a1a2e;
-    font-size: 14px; font-family: inherit; outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none;
+    width: 100%; background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px;
+    padding: 10px 12px; color: #1a1a2e; font-size: 14px; font-family: inherit;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none;
   }
-  input:focus, select:focus {
-    border-color: #1a1a2e; box-shadow: 0 0 0 3px rgba(26,26,46,0.08); background: #fff;
-  }
+  input:focus, select:focus { border-color: #1a1a2e; box-shadow: 0 0 0 3px rgba(26,26,46,0.08); background: #fff; }
   input::placeholder { color: #bbb; }
 
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .two-col .field { margin-bottom: 0; }
 
-  /* SEARCHABLE DROPDOWN */
   .search-wrap { position: relative; }
-  .dropdown-list {
-    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-    background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
-    z-index: 300; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-  }
+  .dropdown-list { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; z-index: 300; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
   .dropdown-list.open { display: block; }
-  .dropdown-item {
-    padding: 10px 14px; font-size: 13px; cursor: pointer;
-    border-bottom: 1px solid #f5f5f5; transition: background 0.1s;
-  }
+  .dropdown-item { padding: 10px 14px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f5f5f5; transition: background 0.1s; }
   .dropdown-item:last-child { border-bottom: none; }
   .dropdown-item:hover { background: #f5f5f5; }
   .dropdown-item.no-match { color: #bbb; cursor: default; font-style: italic; }
 
-  /* PART ROWS */
-  .part-row {
-    background: #fafafa; border: 1px solid #e8e8e8;
-    border-radius: 10px; padding: 14px; margin-bottom: 10px;
-  }
+  .part-row { background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
   .part-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .part-row-num { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; }
-  .remove-btn {
-    background: none; border: 1px solid #e0e0e0; color: #e53e3e;
-    border-radius: 6px; padding: 3px 10px; font-size: 12px;
-    cursor: pointer; font-weight: 600; transition: all 0.15s;
-  }
+  .remove-btn { background: none; border: 1px solid #e0e0e0; color: #e53e3e; border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; font-weight: 600; transition: all 0.15s; }
   .remove-btn:hover { background: #fff5f5; border-color: #e53e3e; }
 
   .part-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .part-grid .field { margin-bottom: 0; }
 
-  .row-total {
-    margin-top: 10px; text-align: right; font-size: 12px; font-weight: 600;
-    color: #666; background: #fff; border: 1px solid #e8e8e8;
-    border-radius: 6px; padding: 6px 10px;
-  }
+  .row-total { margin-top: 10px; text-align: right; font-size: 12px; font-weight: 600; color: #666; background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 6px 10px; }
   .row-total span { color: #1a1a2e; }
 
-  .add-part-btn {
-    width: 100%; background: #fff; border: 1.5px dashed #d0d0d0;
-    border-radius: 8px; padding: 12px; color: #888; font-size: 13px;
-    font-weight: 600; font-family: inherit; cursor: pointer;
-    transition: all 0.2s; margin-bottom: 14px;
-  }
+  .stock-info { display: none; margin-top: 7px; border-radius: 6px; padding: 7px 10px; font-size: 12px; font-weight: 600; }
+  .stock-info.show { display: block; }
+  .stock-info.ok   { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+  .stock-info.low  { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+  .stock-info.zero { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; }
+
+  .add-part-btn { width: 100%; background: #fff; border: 1.5px dashed #d0d0d0; border-radius: 8px; padding: 12px; color: #888; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; margin-bottom: 14px; }
   .add-part-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
 
-  .bill-total-bar {
-    border-radius: 8px; padding: 10px 14px;
-    display: flex; justify-content: space-between; align-items: center;
-    color: #fff; margin-bottom: 0;
-  }
+  .bill-total-bar { border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
   .bill-total-bar.dark { background: #1a1a2e; }
   .bill-total-bar.green { background: #16a34a; }
   .bill-total-bar.amber { background: #d97706; }
   .bill-total-label { font-size: 12px; font-weight: 600; opacity: 0.8; }
   .bill-total-amount { font-size: 15px; font-weight: 700; }
 
-  /* COLLAPSIBLE */
-  .collapsible-trigger {
-    width: 100%; background: #fff; border: 1px solid #e8e8e8;
-    border-radius: 10px; padding: 12px 16px; color: #555;
-    font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
-    text-align: left; display: flex; align-items: center; justify-content: space-between;
-    transition: all 0.15s; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
+  .collapsible-trigger { width: 100%; background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 12px 16px; color: #555; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: all 0.15s; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
   .collapsible-trigger:hover { border-color: #999; color: #1a1a2e; }
   .chevron { transition: transform 0.2s; font-size: 11px; }
   .collapsible-trigger.open .chevron { transform: rotate(180deg); }
   .collapsible-trigger.open { border-radius: 10px 10px 0 0; border-bottom-color: transparent; margin-bottom: 0; }
-
-  .collapsible-body {
-    display: none; background: #fafafa; border: 1px solid #e8e8e8;
-    border-top: none; border-radius: 0 0 10px 10px; padding: 16px; margin-bottom: 8px;
-  }
+  .collapsible-body { display: none; background: #fafafa; border: 1px solid #e8e8e8; border-top: none; border-radius: 0 0 10px 10px; padding: 16px; margin-bottom: 8px; }
   .collapsible-body.open { display: block; }
   .collapsible-body .field { margin-bottom: 12px; }
 
-  .save-btn {
-    width: 100%; padding: 10px; border: none; border-radius: 8px;
-    color: #fff; font-size: 13px; font-weight: 600; font-family: inherit;
-    cursor: pointer; margin-top: 4px; transition: background 0.2s;
-  }
+  .save-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; margin-top: 4px; transition: background 0.2s; }
   .save-btn.dark { background: #1a1a2e; }
   .save-btn.dark:hover { background: #2d2d50; }
   .save-btn.amber { background: #d97706; }
   .save-btn.amber:hover { background: #b45309; }
 
-  .submit-btn {
-    width: 100%; padding: 11px 16px; border: none; border-radius: 8px;
-    font-size: 13px; font-weight: 600; font-family: inherit;
-    cursor: pointer; transition: all 0.2s; margin-top: 6px; color: #fff;
-    letter-spacing: 0.3px;
-  }
+  .submit-btn { width: 100%; padding: 11px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; margin-top: 6px; color: #fff; letter-spacing: 0.3px; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .submit-btn.dark { background: #1a1a2e; }
   .submit-btn.dark:hover:not(:disabled) { background: #2d2d50; }
@@ -197,43 +107,21 @@
   .submit-btn.amber { background: #d97706; }
   .submit-btn.amber:hover:not(:disabled) { background: #b45309; }
 
-  .toast {
-    position: fixed; bottom: 20px; left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    color: #fff; border-radius: 50px; padding: 11px 22px;
-    font-size: 13px; font-weight: 600; z-index: 999;
-    transition: transform 0.3s ease; white-space: nowrap;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); color: #fff; border-radius: 50px; padding: 11px 22px; font-size: 13px; font-weight: 600; z-index: 999; transition: transform 0.3s ease; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.success { background: #16a34a; }
   .toast.error { background: #dc2626; }
   .toast.amber { background: #d97706; }
 
-  .loading-bar {
-    position: fixed; top: 0; left: 0; height: 3px;
-    background: #1a1a2e; width: 0%; transition: width 0.3s;
-    z-index: 9999; border-radius: 0 2px 2px 0;
-  }
-
+  .loading-bar { position: fixed; top: 0; left: 0; height: 3px; background: #1a1a2e; width: 0%; transition: width 0.3s; z-index: 9999; border-radius: 0 2px 2px 0; }
   .section-note { font-size: 12px; color: #888; line-height: 1.6; margin-bottom: 12px; }
 
-  /* BILLING METHOD TOGGLE */
   .billing-toggle { display: flex; gap: 8px; margin-top: 6px; }
-  .billing-btn {
-    flex: 1; padding: 10px; border: 1.5px solid #e0e0e0;
-    border-radius: 8px; font-size: 13px; font-weight: 600;
-    font-family: inherit; cursor: pointer; background: #fafafa;
-    color: #888; transition: all 0.2s; text-align: center;
-  }
-  .billing-btn.active-cash { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
+  .billing-btn { flex: 1; padding: 10px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; background: #fafafa; color: #888; transition: all 0.2s; text-align: center; }
+  .billing-btn.active-cash   { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
   .billing-btn.active-credit { border-color: #dc2626; background: #fff5f5; color: #dc2626; }
 
-  /* OUTSTANDING BALANCE BOX */
-  .balance-box {
-    display: none; background: #fffbeb; border: 1px solid #fde68a;
-    border-radius: 8px; padding: 10px 14px; margin-top: 8px;
-  }
+  .balance-box { display: none; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin-top: 8px; }
   .balance-box.show { display: block; }
   .balance-box-label { font-size: 11px; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
   .balance-box-amount { font-size: 18px; font-weight: 700; color: #d97706; margin-top: 2px; }
@@ -289,11 +177,10 @@
           <div class="dropdown-list" id="sale-shop-dd"></div>
         </div>
         <div class="balance-box" id="shop-balance-box">
-          <div class="balance-box-label">Current Outstanding Balance</div>
+          <div class="balance-box-label">Outstanding Balance</div>
           <div class="balance-box-amount" id="shop-balance-amount">PKR 0</div>
         </div>
       </div>
-
       <div class="field">
         <label>Billing Method</label>
         <div class="billing-toggle">
@@ -359,7 +246,6 @@
     <div class="card">
       <div class="card-title">Restock Details</div>
       <div class="field"><label>Date</label><input type="date" id="re-date"></div>
-
       <div class="field">
         <label>Part Name</label>
         <div class="search-wrap">
@@ -371,7 +257,6 @@
           <div class="dropdown-list" id="re-part-dd"></div>
         </div>
       </div>
-
       <div class="field"><label>Manufacturer Name</label><input type="text" id="re-maker" placeholder="Manufacturer name"></div>
       <div class="two-col">
         <div class="field"><label>Manufacturer City</label><input type="text" id="re-city" placeholder="City"></div>
@@ -379,17 +264,14 @@
       </div>
       <div class="two-col">
         <div class="field"><label>Model</label><input type="text" id="re-model" placeholder="CD70 / CG125 / Common"></div>
-        <div class="field"><label>Price Condition</label><input type="text" id="re-condition" placeholder="PC / Dozen / Packet / Set"></div>
+        <div class="field"><label>Price Condition</label><input type="text" id="re-condition" placeholder="PC / Dozen / Packet"></div>
       </div>
-
       <div style="height:1px;background:#f0f0f0;margin:4px 0 14px;"></div>
-
       <div class="two-col">
         <div class="field"><label>Quantity</label><input type="number" id="re-qty" placeholder="0" min="1" oninput="calcRe()"></div>
         <div class="field"><label>Cost Price/Unit (PKR)</label><input type="number" id="re-price" placeholder="0" oninput="calcRe()"></div>
       </div>
       <div class="field"><label>Supplier <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="re-supplier" placeholder="Supplier name"></div>
-
       <div class="bill-total-bar green" style="margin-top:4px;">
         <div class="bill-total-label">Total Cost</div>
         <div class="bill-total-amount" id="re-total">PKR 0</div>
@@ -401,7 +283,7 @@
       <span>+ Set Initial / Opening Stock</span><span class="chevron">▼</span>
     </button>
     <div class="collapsible-body" id="init-stock-body">
-      <p class="section-note">Use this <strong>once per part</strong> to enter the current quantity you already have in stock before this system started tracking. This sets the opening stock count.</p>
+      <p class="section-note">Use this <strong>once per part</strong> to enter the current quantity you already have in stock before this system started tracking.</p>
       <div class="field">
         <label>Part Name</label>
         <div class="search-wrap">
@@ -412,14 +294,8 @@
           <div class="dropdown-list" id="is-part-dd"></div>
         </div>
       </div>
-      <div class="field">
-        <label>Current Stock Quantity</label>
-        <input type="number" id="is-qty" placeholder="How many units you currently have" min="0">
-      </div>
-      <div class="field">
-        <label>Notes <span style="font-weight:400;color:#bbb">(optional)</span></label>
-        <input type="text" id="is-notes" placeholder="e.g. counted on 15 April 2026">
-      </div>
+      <div class="field"><label>Current Stock Quantity</label><input type="number" id="is-qty" placeholder="How many units you currently have" min="0"></div>
+      <div class="field"><label>Notes <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="is-notes" placeholder="e.g. counted on 17 April 2026"></div>
       <button class="save-btn dark" onclick="saveInitStock()">Save Opening Stock</button>
     </div>
   </div>
@@ -448,7 +324,7 @@
       <span>+ Set Opening Balance for a Shop</span><span class="chevron">▼</span>
     </button>
     <div class="collapsible-body" id="ob-body">
-      <p class="section-note">Use this <strong>once per shop</strong> to enter how much they already owed before this system started. Only needs to be done one time per shop.</p>
+      <p class="section-note">Use this <strong>once per shop</strong> to enter how much they already owed before this system started.</p>
       <div class="field">
         <label>Shop</label>
         <div class="search-wrap">
@@ -469,9 +345,8 @@
 
 <script>
 const URL = "https://script.google.com/macros/s/AKfycbxqM7TK0rbS_HbyDFO9F6oH9wC_aZh028H-oqA2bjSIAdy833nTn1xyWU6Icrp6OkLu_Q/exec";
-let shops = [], parts = [], partsData = {}, balanceMap = {}, rc = 0;
+let shops = [], parts = [], partsData = {}, balanceMap = {}, stockMap = {}, rc = 0;
 let billingMethod = 'Cash';
-// partsData = { "Brake Pad CD70": { condition:"PC", model:"CD70", maker:"XYZ", city:"Lahore", contact:"..." } }
 
 window.addEventListener('DOMContentLoaded', () => {
   const t = new Date().toISOString().split('T')[0];
@@ -484,17 +359,15 @@ async function fetchData() {
   try {
     const r = await fetch(URL + '?type=get_data');
     const d = await r.json();
-    shops = d.shops || [];
-    parts = d.parts || [];
-    partsData = {};
-    (d.partsDetail || []).forEach(function(p) {
-      if (p.name) partsData[p.name] = p;
-    });
+    shops      = d.shops      || [];
+    parts      = d.parts      || [];
     balanceMap = d.balanceMap || {};
-  } catch(e) {}
+    stockMap   = d.stockMap   || {};
+    partsData  = {};
+    (d.partsDetail || []).forEach(function(p) { if(p.name) partsData[p.name] = p; });
+  } catch(e) { console.warn('Data load failed', e); }
 }
 
-// Tabs
 function switchTab(name) {
   ['sale','restock','payment'].forEach(t => {
     document.getElementById('panel-'+t).classList.remove('active');
@@ -504,7 +377,6 @@ function switchTab(name) {
   document.getElementById('tab-'+name).className = 'tab active-'+name;
 }
 
-// Search dropdown
 function fsearch(inId, ddId, arr) {
   const q = document.getElementById(inId).value.toLowerCase();
   renderDD(ddId, arr.filter(i => i.toLowerCase().includes(q)), inId);
@@ -517,20 +389,13 @@ function osearch(inId, ddId, arr) {
 }
 function renderDD(ddId, items, inId) {
   const dd = document.getElementById(ddId);
-  if (!items.length) {
-    dd.innerHTML = '<div class="dropdown-item no-match">No matches found</div>';
-    return;
-  }
+  if (!items.length) { dd.innerHTML = '<div class="dropdown-item no-match">No matches found</div>'; return; }
   dd.innerHTML = '';
   items.forEach(item => {
     const div = document.createElement('div');
     div.className = 'dropdown-item';
     div.textContent = item;
-    // Both mousedown (desktop) and touchstart (mobile)
-    const handler = (e) => {
-      e.preventDefault();
-      pick(inId, ddId, item);
-    };
+    const handler = (e) => { e.preventDefault(); pick(inId, ddId, item); };
     div.addEventListener('mousedown', handler);
     div.addEventListener('touchstart', handler, { passive: false });
     dd.appendChild(div);
@@ -539,36 +404,46 @@ function renderDD(ddId, items, inId) {
 function pick(inId, ddId, val) {
   document.getElementById(inId).value = val;
   document.getElementById(ddId).classList.remove('open');
-  if (inId === 're-part-s') autofillRestock(val);
-  // Show outstanding balance when shop is selected in sale tab
-  if (inId === 'sale-shop-s') showShopBalance(val);
+  if (inId === 're-part-s')    autofillRestock(val);
+  if (inId === 'sale-shop-s')  showShopBalance(val);
+  if (inId.startsWith('ps-'))  showPartStock(inId.replace('ps-',''), val);
 }
+function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 300); }
 
 function showShopBalance(shopName) {
   const box = document.getElementById('shop-balance-box');
   const amt = document.getElementById('shop-balance-amount');
   const balance = balanceMap[shopName];
-  if (balance !== undefined && balance > 0) {
-    amt.textContent = 'PKR ' + parseFloat(balance).toLocaleString();
+  if (balance !== undefined) {
+    amt.textContent = 'PKR ' + Math.max(0, parseFloat(balance)).toLocaleString();
     box.classList.add('show');
-  } else if (balance !== undefined && balance <= 0) {
-    amt.textContent = 'PKR 0 — No outstanding balance';
-    box.classList.add('show');
-  } else {
-    box.classList.remove('show');
-  }
+  } else { box.classList.remove('show'); }
 }
 
 function setBilling(method) {
   billingMethod = method;
-  document.getElementById('btn-cash').className = 'billing-btn' + (method==='Cash' ? ' active-cash' : '');
+  document.getElementById('btn-cash').className   = 'billing-btn' + (method==='Cash'   ? ' active-cash'   : '');
   document.getElementById('btn-credit').className = 'billing-btn' + (method==='Credit' ? ' active-credit' : '');
 }
-function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 300); }
 
-// Auto-fill restock fields from stored parts data
-// Sheet: B=Part Name, C=Manufacturer Name, D=Manufacturer City,
-//        E=Manufacturer Contact, F=Model, G=Price Condition, H=Price Per Unit
+function showPartStock(rowIdx, partName) {
+  const box = document.getElementById('stock-info-'+rowIdx);
+  if (!box) return;
+  const s = stockMap[partName];
+  if (!s) { box.className = 'stock-info'; return; }
+  const qty = Number(s.currentStock) || 0;
+  if (qty <= 0) {
+    box.className = 'stock-info show zero';
+    box.textContent = '⚠ Out of stock — 0 units available';
+  } else if (qty <= 5) {
+    box.className = 'stock-info show low';
+    box.textContent = '⚠ Low stock — only ' + qty + ' units left';
+  } else {
+    box.className = 'stock-info show ok';
+    box.textContent = '✓ In stock — ' + qty + ' units available';
+  }
+}
+
 function autofillRestock(partName) {
   const d = partsData[partName];
   if (!d) return;
@@ -577,13 +452,9 @@ function autofillRestock(partName) {
   document.getElementById('re-mc').value        = d.contact   || '';
   document.getElementById('re-model').value     = d.model     || '';
   document.getElementById('re-condition').value = d.condition || '';
-  if (d.unitPrice) {
-    document.getElementById('re-price').value   = d.unitPrice;
-    calcRe();
-  }
+  if (d.unitPrice) { document.getElementById('re-price').value = d.unitPrice; calcRe(); }
 }
 
-// Part row search (dynamic)
 function fpart(inId, ddId) {
   const q = document.getElementById(inId).value.toLowerCase();
   renderDD(ddId, parts.filter(p => p.toLowerCase().includes(q)), inId);
@@ -595,7 +466,6 @@ function opart(inId, ddId) {
   document.getElementById(ddId).classList.add('open');
 }
 
-// Part rows
 function addRow() {
   rc++;
   const i = rc;
@@ -615,6 +485,7 @@ function addRow() {
           onblur="setTimeout(()=>document.getElementById('pd-${i}').classList.remove('open'),300)">
         <div class="dropdown-list" id="pd-${i}"></div>
       </div>
+      <div class="stock-info" id="stock-info-${i}"></div>
     </div>
     <div class="part-grid">
       <div class="field"><label>Quantity</label><input type="number" id="pq-${i}" placeholder="0" min="1" oninput="calcRow(${i})"></div>
@@ -626,7 +497,6 @@ function addRow() {
 }
 
 function remRow(i) { document.getElementById('pr-'+i)?.remove(); calcBill(); }
-
 function calcRow(i) {
   const q = parseFloat(document.getElementById('pq-'+i)?.value)||0;
   const p = parseFloat(document.getElementById('pp-'+i)?.value)||0;
@@ -634,7 +504,6 @@ function calcRow(i) {
   if(el) el.textContent = 'PKR '+(q*p).toLocaleString();
   calcBill();
 }
-
 function calcBill() {
   let t = 0;
   document.querySelectorAll('[id^="pq-"]').forEach(el => {
@@ -643,96 +512,82 @@ function calcBill() {
   });
   document.getElementById('bill-total').textContent = 'PKR '+t.toLocaleString();
 }
-
 function calcRe() {
   const q = parseFloat(document.getElementById('re-qty').value)||0;
   const p = parseFloat(document.getElementById('re-price').value)||0;
   document.getElementById('re-total').textContent = 'PKR '+(q*p).toLocaleString();
 }
-
-// Collapsible
-function tog(id, btn) {
-  document.getElementById(id).classList.toggle('open');
-  btn.classList.toggle('open');
-}
-
-// Loading
+function tog(id, btn) { document.getElementById(id).classList.toggle('open'); btn.classList.toggle('open'); }
 function sLoad() { document.getElementById('loadingBar').style.width='70%'; }
 function eLoad() { const b=document.getElementById('loadingBar'); b.style.width='100%'; setTimeout(()=>b.style.width='0%',400); }
-
-// Toast
 function toastMsg(msg, type='success') {
   const el = document.getElementById('toast');
   el.textContent = (type==='success'?'✓ ':type==='amber'?'⚠ ':'✕ ')+msg;
   el.className = 'toast '+type; el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'), 3500);
 }
-
 async function post(payload) {
   const r = await fetch(URL, { method:'POST', body:JSON.stringify(payload) });
   return r.json();
 }
 
-// Submit Sale
 async function submitSale() {
-  const date = document.getElementById('sale-date').value;
-  const shop = document.getElementById('sale-shop-s').value.trim();
+  const date  = document.getElementById('sale-date').value;
+  const shop  = document.getElementById('sale-shop-s').value.trim();
   const visit = document.getElementById('sale-visit').value;
   if(!date||!shop){ toastMsg('Fill Date and Shop','error'); return; }
   const rows = [];
   document.querySelectorAll('[id^="pq-"]').forEach(el => {
     const i = el.id.replace('pq-','');
-    const part = document.getElementById('ps-'+i)?.value.trim();
-    const qty = parseFloat(el.value);
+    const part  = document.getElementById('ps-'+i)?.value.trim();
+    const qty   = parseFloat(el.value);
     const price = parseFloat(document.getElementById('pp-'+i)?.value);
     if(part&&qty>0&&!isNaN(price)) rows.push({part,qty,price});
   });
   if(!rows.length){ toastMsg('Add at least one part','error'); return; }
-  const btn=document.querySelector('.submit-btn.dark'); btn.disabled=true; sLoad();
+  const btn = document.querySelector('.submit-btn.dark'); btn.disabled=true; sLoad();
   try {
     await post({type:'sale', date, shop, visit, rows, billingMethod});
-    toastMsg(billingMethod === 'Credit' ? 'Credit sale saved! Balance updated.' : 'Cash sale saved!');
+    toastMsg(billingMethod==='Credit' ? 'Credit sale saved! Balance updated.' : 'Cash sale saved!');
     document.getElementById('sale-shop-s').value='';
     document.getElementById('sale-visit').value='1st Visit';
     document.getElementById('part-rows').innerHTML=''; rc=0; addRow(); calcBill();
     document.getElementById('sale-date').value=new Date().toISOString().split('T')[0];
     document.getElementById('shop-balance-box').classList.remove('show');
-    setBilling('Cash'); // reset to cash after submit
+    setBilling('Cash');
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
 }
 
-// Submit Restock
 async function submitRestock() {
-  const date=document.getElementById('re-date').value;
-  const part=document.getElementById('re-part-s').value.trim();
-  const qty=parseFloat(document.getElementById('re-qty').value);
-  const price=parseFloat(document.getElementById('re-price').value);
-  const condition=document.getElementById('re-condition').value;
-  const model=document.getElementById('re-model').value.trim();
-  const maker=document.getElementById('re-maker').value.trim();
-  const city=document.getElementById('re-city').value.trim();
-  const contact=document.getElementById('re-mc').value.trim();
-  const supplier=document.getElementById('re-supplier').value.trim();
+  const date      = document.getElementById('re-date').value;
+  const part      = document.getElementById('re-part-s').value.trim();
+  const qty       = parseFloat(document.getElementById('re-qty').value);
+  const price     = parseFloat(document.getElementById('re-price').value);
+  const condition = document.getElementById('re-condition').value.trim();
+  const model     = document.getElementById('re-model').value.trim();
+  const maker     = document.getElementById('re-maker').value.trim();
+  const city      = document.getElementById('re-city').value.trim();
+  const contact   = document.getElementById('re-mc').value.trim();
+  const supplier  = document.getElementById('re-supplier').value.trim();
   if(!date||!part||!qty||isNaN(price)){ toastMsg('Fill Part, Quantity and Price','error'); return; }
-  const btn=document.querySelector('.submit-btn.green'); btn.disabled=true; sLoad();
+  const btn = document.querySelector('.submit-btn.green'); btn.disabled=true; sLoad();
   try {
     await post({type:'restock',date,part,qty,price,condition,model,maker,city,contact,supplier});
     toastMsg('Restock saved!');
-    ['re-part-s','re-qty','re-price','re-model','re-maker','re-city','re-mc','re-supplier','re-condition','re-price'].forEach(id=>document.getElementById(id).value='');
+    ['re-part-s','re-qty','re-price','re-model','re-maker','re-city','re-mc','re-supplier','re-condition'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('re-total').textContent='PKR 0';
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
 }
 
-// Submit Payment
 async function submitPayment() {
-  const date=document.getElementById('pay-date').value;
-  const shop=document.getElementById('pay-shop-s').value.trim();
-  const amount=parseFloat(document.getElementById('pay-amount').value);
-  const notes=document.getElementById('pay-notes').value.trim();
+  const date   = document.getElementById('pay-date').value;
+  const shop   = document.getElementById('pay-shop-s').value.trim();
+  const amount = parseFloat(document.getElementById('pay-amount').value);
+  const notes  = document.getElementById('pay-notes').value.trim();
   if(!date||!shop||!amount||amount<=0){ toastMsg('Fill Date, Shop and Amount','error'); return; }
-  const btn=document.querySelector('.submit-btn.amber'); btn.disabled=true; sLoad();
+  const btn = document.querySelector('.submit-btn.amber'); btn.disabled=true; sLoad();
   try {
     await post({type:'payment',date,shop,amount,notes});
     toastMsg('Payment recorded!');
@@ -741,10 +596,9 @@ async function submitPayment() {
   btn.disabled=false; eLoad();
 }
 
-// Opening Balance
 async function saveOB() {
-  const shop=document.getElementById('ob-shop-s').value.trim();
-  const amount=parseFloat(document.getElementById('ob-amount').value);
+  const shop   = document.getElementById('ob-shop-s').value.trim();
+  const amount = parseFloat(document.getElementById('ob-amount').value);
   if(!shop||isNaN(amount)||amount<0){ toastMsg('Enter shop and amount','error'); return; }
   sLoad();
   try {
@@ -756,12 +610,11 @@ async function saveOB() {
   eLoad();
 }
 
-// New Shop
 async function saveShop() {
-  const name=document.getElementById('ns-name').value.trim();
-  const location=document.getElementById('ns-loc').value.trim();
-  const contact=document.getElementById('ns-contact').value.trim();
-  const balance=parseFloat(document.getElementById('ns-bal').value)||0;
+  const name     = document.getElementById('ns-name').value.trim();
+  const location = document.getElementById('ns-loc').value.trim();
+  const contact  = document.getElementById('ns-contact').value.trim();
+  const balance  = parseFloat(document.getElementById('ns-bal').value)||0;
   if(!name){ toastMsg('Shop name required','error'); return; }
   sLoad();
   try {
@@ -774,31 +627,29 @@ async function saveShop() {
   eLoad();
 }
 
-// Save Initial / Opening Stock
 async function saveInitStock() {
-  const part = document.getElementById('is-part-s').value.trim();
-  const qty = parseFloat(document.getElementById('is-qty').value);
+  const part  = document.getElementById('is-part-s').value.trim();
+  const qty   = parseFloat(document.getElementById('is-qty').value);
   const notes = document.getElementById('is-notes').value.trim();
-  if (!part || isNaN(qty) || qty < 0) { toastMsg('Enter part and valid quantity', 'error'); return; }
+  if(!part||isNaN(qty)||qty<0){ toastMsg('Enter part and valid quantity','error'); return; }
   sLoad();
   try {
-    await post({ type: 'initial_stock', part, qty, notes });
-    toastMsg('Opening stock saved for ' + part + '!', 'amber');
-    document.getElementById('is-part-s').value = '';
-    document.getElementById('is-qty').value = '';
-    document.getElementById('is-notes').value = '';
-  } catch(e) { toastMsg('Error. Check internet.', 'error'); }
+    await post({type:'initial_stock',part,qty,notes});
+    toastMsg('Opening stock saved for '+part+'!','amber');
+    document.getElementById('is-part-s').value='';
+    document.getElementById('is-qty').value='';
+    document.getElementById('is-notes').value='';
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
   eLoad();
 }
 
-// New Part
 async function savePart() {
-  const name=document.getElementById('np-name').value.trim();
-  const condition=document.getElementById('np-cond').value;
-  const model=document.getElementById('np-model').value.trim();
-  const maker=document.getElementById('np-maker').value.trim();
-  const city=document.getElementById('np-city').value.trim();
-  const contact=document.getElementById('np-mc').value.trim();
+  const name      = document.getElementById('np-name').value.trim();
+  const condition = document.getElementById('np-cond').value;
+  const model     = document.getElementById('np-model').value.trim();
+  const maker     = document.getElementById('np-maker').value.trim();
+  const city      = document.getElementById('np-city').value.trim();
+  const contact   = document.getElementById('np-mc').value.trim();
   if(!name){ toastMsg('Part name required','error'); return; }
   sLoad();
   try {
