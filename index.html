@@ -217,6 +217,26 @@
   }
 
   .section-note { font-size: 12px; color: #888; line-height: 1.6; margin-bottom: 12px; }
+
+  /* BILLING METHOD TOGGLE */
+  .billing-toggle { display: flex; gap: 8px; margin-top: 6px; }
+  .billing-btn {
+    flex: 1; padding: 10px; border: 1.5px solid #e0e0e0;
+    border-radius: 8px; font-size: 13px; font-weight: 600;
+    font-family: inherit; cursor: pointer; background: #fafafa;
+    color: #888; transition: all 0.2s; text-align: center;
+  }
+  .billing-btn.active-cash { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
+  .billing-btn.active-credit { border-color: #dc2626; background: #fff5f5; color: #dc2626; }
+
+  /* OUTSTANDING BALANCE BOX */
+  .balance-box {
+    display: none; background: #fffbeb; border: 1px solid #fde68a;
+    border-radius: 8px; padding: 10px 14px; margin-top: 8px;
+  }
+  .balance-box.show { display: block; }
+  .balance-box-label { font-size: 11px; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .balance-box-amount { font-size: 18px; font-weight: 700; color: #d97706; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -267,6 +287,18 @@
             onfocus="osearch('sale-shop-s','sale-shop-dd',shops)"
             onblur="dclose('sale-shop-dd')">
           <div class="dropdown-list" id="sale-shop-dd"></div>
+        </div>
+        <div class="balance-box" id="shop-balance-box">
+          <div class="balance-box-label">Current Outstanding Balance</div>
+          <div class="balance-box-amount" id="shop-balance-amount">PKR 0</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Billing Method</label>
+        <div class="billing-toggle">
+          <div class="billing-btn active-cash" id="btn-cash" onclick="setBilling('Cash')">Cash</div>
+          <div class="billing-btn" id="btn-credit" onclick="setBilling('Credit')">Credit / Loan</div>
         </div>
       </div>
     </div>
@@ -437,7 +469,8 @@
 
 <script>
 const URL = "https://script.google.com/macros/s/AKfycbxqM7TK0rbS_HbyDFO9F6oH9wC_aZh028H-oqA2bjSIAdy833nTn1xyWU6Icrp6OkLu_Q/exec";
-let shops = [], parts = [], partsData = {}, rc = 0;
+let shops = [], parts = [], partsData = {}, balanceMap = {}, rc = 0;
+let billingMethod = 'Cash';
 // partsData = { "Brake Pad CD70": { condition:"PC", model:"CD70", maker:"XYZ", city:"Lahore", contact:"..." } }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -457,6 +490,7 @@ async function fetchData() {
     (d.partsDetail || []).forEach(function(p) {
       if (p.name) partsData[p.name] = p;
     });
+    balanceMap = d.balanceMap || {};
   } catch(e) {}
 }
 
@@ -506,6 +540,29 @@ function pick(inId, ddId, val) {
   document.getElementById(inId).value = val;
   document.getElementById(ddId).classList.remove('open');
   if (inId === 're-part-s') autofillRestock(val);
+  // Show outstanding balance when shop is selected in sale tab
+  if (inId === 'sale-shop-s') showShopBalance(val);
+}
+
+function showShopBalance(shopName) {
+  const box = document.getElementById('shop-balance-box');
+  const amt = document.getElementById('shop-balance-amount');
+  const balance = balanceMap[shopName];
+  if (balance !== undefined && balance > 0) {
+    amt.textContent = 'PKR ' + parseFloat(balance).toLocaleString();
+    box.classList.add('show');
+  } else if (balance !== undefined && balance <= 0) {
+    amt.textContent = 'PKR 0 — No outstanding balance';
+    box.classList.add('show');
+  } else {
+    box.classList.remove('show');
+  }
+}
+
+function setBilling(method) {
+  billingMethod = method;
+  document.getElementById('btn-cash').className = 'billing-btn' + (method==='Cash' ? ' active-cash' : '');
+  document.getElementById('btn-credit').className = 'billing-btn' + (method==='Credit' ? ' active-credit' : '');
 }
 function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 300); }
 
@@ -633,12 +690,14 @@ async function submitSale() {
   if(!rows.length){ toastMsg('Add at least one part','error'); return; }
   const btn=document.querySelector('.submit-btn.dark'); btn.disabled=true; sLoad();
   try {
-    await post({type:'sale',date,shop,visit,rows});
-    toastMsg('Sale entry saved!');
+    await post({type:'sale', date, shop, visit, rows, billingMethod});
+    toastMsg(billingMethod === 'Credit' ? 'Credit sale saved! Balance updated.' : 'Cash sale saved!');
     document.getElementById('sale-shop-s').value='';
     document.getElementById('sale-visit').value='1st Visit';
     document.getElementById('part-rows').innerHTML=''; rc=0; addRow(); calcBill();
     document.getElementById('sale-date').value=new Date().toISOString().split('T')[0];
+    document.getElementById('shop-balance-box').classList.remove('show');
+    setBilling('Cash'); // reset to cash after submit
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
 }
