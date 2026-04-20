@@ -390,10 +390,10 @@ function fsearch(inId, ddId, arr) {
   document.getElementById(ddId).classList.add('open');
 }
 function osearch(inId, ddId, arr) {
+  const dd = document.getElementById(ddId);
+  dd.classList.add('open');
   if (!arr || arr.length === 0) {
-    const dd = document.getElementById(ddId);
-    dd.innerHTML = '<div class="dropdown-item no-match">Loading... please wait</div>';
-    dd.classList.add('open');
+    dd.innerHTML = '<div class="dropdown-item no-match">No data yet</div>';
     return;
   }
   const q = document.getElementById(inId).value.toLowerCase();
@@ -404,7 +404,6 @@ function osearch(inId, ddId, arr) {
     list = [...arr].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).slice(0, 15);
   }
   renderDD(ddId, list, inId);
-  document.getElementById(ddId).classList.add('open');
 }
 function renderDD(ddId, items, inId) {
   const dd = document.getElementById(ddId);
@@ -490,7 +489,7 @@ function fpart(inId, ddId) {
 function opart(inId, ddId) {
   if (!parts || parts.length === 0) {
     const dd = document.getElementById(ddId);
-    dd.innerHTML = '<div class="dropdown-item no-match">Loading... please wait</div>';
+    dd.innerHTML = '<div class="dropdown-item no-match">No data yet</div>';
     dd.classList.add('open');
     return;
   }
