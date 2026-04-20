@@ -397,7 +397,13 @@ function osearch(inId, ddId, arr) {
     return;
   }
   const q = document.getElementById(inId).value.toLowerCase();
-  renderDD(ddId, q ? arr.filter(i => i.toLowerCase().includes(q)) : arr, inId);
+  let list;
+  if (q) {
+    list = arr.filter(i => i.toLowerCase().includes(q));
+  } else {
+    list = [...arr].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).slice(0, 15);
+  }
+  renderDD(ddId, list, inId);
   document.getElementById(ddId).classList.add('open');
 }
 function renderDD(ddId, items, inId) {
@@ -489,7 +495,13 @@ function opart(inId, ddId) {
     return;
   }
   const q = document.getElementById(inId).value.toLowerCase();
-  renderDD(ddId, q ? parts.filter(p => p.toLowerCase().includes(q)) : parts, inId);
+  let list;
+  if (q) {
+    list = parts.filter(p => p.toLowerCase().includes(q));
+  } else {
+    list = [...parts].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).slice(0, 15);
+  }
+  renderDD(ddId, list, inId);
   document.getElementById(ddId).classList.add('open');
 }
 
