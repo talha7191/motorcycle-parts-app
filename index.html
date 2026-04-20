@@ -125,6 +125,9 @@
   .balance-box.show { display: block; }
   .balance-box-label { font-size: 11px; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
   .balance-box-amount { font-size: 18px; font-weight: 700; color: #d97706; margin-top: 2px; }
+  .balance-box.zero { background: #f0fdf4; border-color: #bbf7d0; }
+  .balance-box.zero .balance-box-label { color: #166534; }
+  .balance-box.zero .balance-box-amount { color: #16a34a; }
 </style>
 </head>
 <body>
@@ -314,6 +317,10 @@
             onblur="dclose('pay-shop-dd')">
           <div class="dropdown-list" id="pay-shop-dd"></div>
         </div>
+        <div class="balance-box" id="pay-balance-box">
+          <div class="balance-box-label" id="pay-balance-label">Current Outstanding Balance</div>
+          <div class="balance-box-amount" id="pay-balance-amount">PKR 0</div>
+        </div>
       </div>
       <div class="field"><label>Amount Received (PKR)</label><input type="number" id="pay-amount" placeholder="Enter amount" min="1"></div>
       <div class="field"><label>Notes <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="pay-notes" placeholder="e.g. cash, cheque, partial payment..."></div>
@@ -383,8 +390,14 @@ function fsearch(inId, ddId, arr) {
   document.getElementById(ddId).classList.add('open');
 }
 function osearch(inId, ddId, arr) {
+  if (!arr || arr.length === 0) {
+    const dd = document.getElementById(ddId);
+    dd.innerHTML = '<div class="dropdown-item no-match">Loading... please wait</div>';
+    dd.classList.add('open');
+    return;
+  }
   const q = document.getElementById(inId).value.toLowerCase();
-  renderDD(ddId, (q ? arr.filter(i => i.toLowerCase().includes(q)) : arr).slice(0,40), inId);
+  renderDD(ddId, q ? arr.filter(i => i.toLowerCase().includes(q)) : arr, inId);
   document.getElementById(ddId).classList.add('open');
 }
 function renderDD(ddId, items, inId) {
@@ -405,19 +418,27 @@ function pick(inId, ddId, val) {
   document.getElementById(inId).value = val;
   document.getElementById(ddId).classList.remove('open');
   if (inId === 're-part-s')    autofillRestock(val);
-  if (inId === 'sale-shop-s')  showShopBalance(val);
+  if (inId === 'sale-shop-s')  showShopBalance(val, 'shop-balance-box', 'shop-balance-amount');
+  if (inId === 'pay-shop-s')   showShopBalance(val, 'pay-balance-box', 'pay-balance-amount');
   if (inId.startsWith('ps-'))  showPartStock(inId.replace('ps-',''), val);
 }
 function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 300); }
 
-function showShopBalance(shopName) {
-  const box = document.getElementById('shop-balance-box');
-  const amt = document.getElementById('shop-balance-amount');
+function showShopBalance(shopName, boxId, amtId) {
+  const box = document.getElementById(boxId);
+  const amt = document.getElementById(amtId);
   const balance = balanceMap[shopName];
   if (balance !== undefined) {
-    amt.textContent = 'PKR ' + Math.max(0, parseFloat(balance)).toLocaleString();
+    const val = Math.max(0, parseFloat(balance) || 0);
+    amt.textContent = 'PKR ' + val.toLocaleString();
     box.classList.add('show');
-  } else { box.classList.remove('show'); }
+    if (val === 0) box.classList.add('zero');
+    else box.classList.remove('zero');
+  } else {
+    amt.textContent = 'PKR 0';
+    box.classList.add('show');
+    box.classList.add('zero');
+  }
 }
 
 function setBilling(method) {
@@ -461,8 +482,14 @@ function fpart(inId, ddId) {
   document.getElementById(ddId).classList.add('open');
 }
 function opart(inId, ddId) {
+  if (!parts || parts.length === 0) {
+    const dd = document.getElementById(ddId);
+    dd.innerHTML = '<div class="dropdown-item no-match">Loading... please wait</div>';
+    dd.classList.add('open');
+    return;
+  }
   const q = document.getElementById(inId).value.toLowerCase();
-  renderDD(ddId, (q ? parts.filter(p => p.toLowerCase().includes(q)) : parts).slice(0,40), inId);
+  renderDD(ddId, q ? parts.filter(p => p.toLowerCase().includes(q)) : parts, inId);
   document.getElementById(ddId).classList.add('open');
 }
 
@@ -555,6 +582,7 @@ async function submitSale() {
     document.getElementById('sale-date').value=new Date().toISOString().split('T')[0];
     document.getElementById('shop-balance-box').classList.remove('show');
     setBilling('Cash');
+    fetchData();
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
 }
@@ -592,6 +620,8 @@ async function submitPayment() {
     await post({type:'payment',date,shop,amount,notes});
     toastMsg('Payment recorded!');
     ['pay-shop-s','pay-amount','pay-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('pay-balance-box').classList.remove('show');
+    fetchData();
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
 }
@@ -606,6 +636,7 @@ async function saveOB() {
     toastMsg('Opening balance saved for '+shop+'!','amber');
     document.getElementById('ob-shop-s').value='';
     document.getElementById('ob-amount').value='';
+    fetchData();
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   eLoad();
 }
