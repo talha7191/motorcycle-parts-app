@@ -120,6 +120,7 @@
   .billing-btn { flex: 1; padding: 10px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; background: #fafafa; color: #888; transition: all 0.2s; text-align: center; }
   .billing-btn.active-cash   { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
   .billing-btn.active-credit { border-color: #dc2626; background: #fff5f5; color: #dc2626; }
+  .billing-btn.active-split  { border-color: #d97706; background: #fffbeb; color: #d97706; }
 
   .balance-box { display: none; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin-top: 8px; }
   .balance-box.show { display: block; }
@@ -231,7 +232,22 @@
         <label>Billing Method</label>
         <div class="billing-toggle">
           <div class="billing-btn active-cash" id="btn-cash" onclick="setBilling('Cash')">Cash</div>
-          <div class="billing-btn" id="btn-credit" onclick="setBilling('Credit')">Credit / Loan</div>
+          <div class="billing-btn" id="btn-credit" onclick="setBilling('Credit')">Credit</div>
+          <div class="billing-btn" id="btn-split" onclick="setBilling('Split')">Split</div>
+        </div>
+        <div id="split-section" style="display:none; margin-top:10px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px;">
+          <div style="font-size:11px; font-weight:600; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Split Payment — how is the bill being paid?</div>
+          <div class="two-col">
+            <div class="field" style="margin-bottom:0">
+              <label style="color:#16a34a">Cash Amount (PKR)</label>
+              <input type="number" id="split-cash" placeholder="0" min="0" oninput="updateSplitCredit()">
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label style="color:#dc2626">Credit Amount (PKR)</label>
+              <input type="number" id="split-credit" placeholder="0" min="0" oninput="updateSplitCash()">
+            </div>
+          </div>
+          <div style="font-size:11px; color:#92400e; margin-top:8px;" id="split-info">Cash + Credit should equal the Bill Total</div>
         </div>
       </div>
     </div>
@@ -535,6 +551,56 @@ function setBilling(method) {
   billingMethod = method;
   document.getElementById('btn-cash').className   = 'billing-btn' + (method==='Cash'   ? ' active-cash'   : '');
   document.getElementById('btn-credit').className = 'billing-btn' + (method==='Credit' ? ' active-credit' : '');
+  document.getElementById('btn-split').className  = 'billing-btn' + (method==='Split'  ? ' active-split'  : '');
+  const splitSection = document.getElementById('split-section');
+  if (method === 'Split') {
+    splitSection.style.display = 'block';
+    // Auto-fill credit = bill total (starting point)
+    const bill = getBillTotal();
+    document.getElementById('split-credit').value = bill;
+    document.getElementById('split-cash').value = 0;
+    updateSplitInfo();
+  } else {
+    splitSection.style.display = 'none';
+  }
+}
+
+function getBillTotal() {
+  let t = 0;
+  document.querySelectorAll('[id^="pq-"]').forEach(el => {
+    const i = el.id.replace('pq-','');
+    t += (parseFloat(el.value)||0)*(parseFloat(document.getElementById('pp-'+i)?.value)||0);
+  });
+  return t;
+}
+
+function updateSplitCredit() {
+  const bill = getBillTotal();
+  const cash = parseFloat(document.getElementById('split-cash').value) || 0;
+  document.getElementById('split-credit').value = Math.max(0, bill - cash);
+  updateSplitInfo();
+}
+
+function updateSplitCash() {
+  const bill = getBillTotal();
+  const credit = parseFloat(document.getElementById('split-credit').value) || 0;
+  document.getElementById('split-cash').value = Math.max(0, bill - credit);
+  updateSplitInfo();
+}
+
+function updateSplitInfo() {
+  const bill = getBillTotal();
+  const cash = parseFloat(document.getElementById('split-cash').value) || 0;
+  const credit = parseFloat(document.getElementById('split-credit').value) || 0;
+  const total = cash + credit;
+  const info = document.getElementById('split-info');
+  if (Math.abs(total - bill) < 0.01) {
+    info.style.color = '#16a34a';
+    info.textContent = '✓ Cash + Credit = PKR ' + total.toLocaleString() + ' (matches bill total)';
+  } else {
+    info.style.color = '#dc2626';
+    info.textContent = '⚠ Cash + Credit = PKR ' + total.toLocaleString() + ' but bill is PKR ' + bill.toLocaleString();
+  }
 }
 
 function showPartStock(rowIdx, partName) {
@@ -634,6 +700,12 @@ function calcBill() {
     t += (parseFloat(el.value)||0)*(parseFloat(document.getElementById('pp-'+i)?.value)||0);
   });
   document.getElementById('bill-total').textContent = 'PKR '+t.toLocaleString();
+  // If Split is active, keep credit = bill - cash
+  if (billingMethod === 'Split') {
+    const cash = parseFloat(document.getElementById('split-cash').value) || 0;
+    document.getElementById('split-credit').value = Math.max(0, t - cash);
+    updateSplitInfo();
+  }
 }
 function calcRe() {
   const q = parseFloat(document.getElementById('re-qty').value)||0;
@@ -677,21 +749,44 @@ async function doSubmitSale(shouldPrint) {
   });
   if(!rows.length){ toastMsg('Add at least one part','error'); return; }
 
+  const billTotal = rows.reduce((s, r) => s + r.qty * r.price, 0);
+  let splitCash = 0, splitCredit = 0;
+
+  if (billingMethod === 'Split') {
+    splitCash   = parseFloat(document.getElementById('split-cash').value) || 0;
+    splitCredit = parseFloat(document.getElementById('split-credit').value) || 0;
+    if (Math.abs((splitCash + splitCredit) - billTotal) > 0.01) {
+      toastMsg('Cash + Credit must equal bill total','error');
+      return;
+    }
+    if (splitCash <= 0 || splitCredit <= 0) {
+      toastMsg('Both Cash and Credit must be greater than 0 for Split','error');
+      return;
+    }
+  }
+
   const btn = shouldPrint ? document.querySelector('.print-btn') : document.querySelector('.submit-btn.dark');
   btn.disabled=true; sLoad();
 
-  // Build receipt if needed BEFORE submission (using current balance)
+  // Build receipt if needed BEFORE submission
   if (shouldPrint) {
     const prevBal = Math.max(0, parseFloat(balanceMap[shop]) || 0);
-    const billTotal = rows.reduce((s, r) => s + r.qty * r.price, 0);
-    const thisCredit = billingMethod === 'Credit' ? billTotal : 0;
+    let thisCredit = 0;
+    if (billingMethod === 'Credit') thisCredit = billTotal;
+    else if (billingMethod === 'Split') thisCredit = splitCredit;
     const newBal = prevBal + thisCredit;
-    fillReceipt(date, shop, visit, rows, billTotal, prevBal, thisCredit, newBal);
+    fillReceipt(date, shop, visit, rows, billTotal, prevBal, thisCredit, newBal, splitCash, splitCredit);
   }
 
   try {
-    await post({type:'sale', date, shop, visit, rows, billingMethod});
-    toastMsg(billingMethod==='Credit' ? 'Credit sale saved! Balance updated.' : 'Cash sale saved!');
+    await post({type:'sale', date, shop, visit, rows, billingMethod, splitCash, splitCredit});
+    if (billingMethod === 'Split') {
+      toastMsg('Split sale saved! PKR ' + splitCash.toLocaleString() + ' cash + PKR ' + splitCredit.toLocaleString() + ' credit');
+    } else if (billingMethod === 'Credit') {
+      toastMsg('Credit sale saved! Balance updated.');
+    } else {
+      toastMsg('Cash sale saved!');
+    }
 
     if (shouldPrint) {
       setTimeout(() => window.print(), 300);
@@ -702,17 +797,23 @@ async function doSubmitSale(shouldPrint) {
     document.getElementById('part-rows').innerHTML=''; rc=0; addRow(); calcBill();
     document.getElementById('sale-date').value=new Date().toISOString().split('T')[0];
     document.getElementById('shop-balance-box').classList.remove('show');
+    document.getElementById('split-cash').value = '';
+    document.getElementById('split-credit').value = '';
     setBilling('Cash');
     fetchData();
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
 }
 
-function fillReceipt(date, shop, visit, rows, billTotal, prevBal, thisCredit, newBal) {
+function fillReceipt(date, shop, visit, rows, billTotal, prevBal, thisCredit, newBal, splitCash, splitCredit) {
   document.getElementById('pr-date').textContent = formatReceiptDate(date);
   document.getElementById('pr-shop').textContent = shop;
   document.getElementById('pr-visit').textContent = visit;
-  document.getElementById('pr-billing').textContent = billingMethod.toUpperCase();
+  let billingLabel = billingMethod.toUpperCase();
+  if (billingMethod === 'Split') {
+    billingLabel = 'SPLIT (Cash: ' + (splitCash||0).toLocaleString() + ' / Credit: ' + (splitCredit||0).toLocaleString() + ')';
+  }
+  document.getElementById('pr-billing').textContent = billingLabel;
 
   const itemsEl = document.getElementById('pr-items');
   itemsEl.innerHTML = '';
