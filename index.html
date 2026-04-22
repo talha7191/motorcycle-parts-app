@@ -128,6 +128,49 @@
   .balance-box.zero { background: #f0fdf4; border-color: #bbf7d0; }
   .balance-box.zero .balance-box-label { color: #166534; }
   .balance-box.zero .balance-box-amount { color: #16a34a; }
+
+  .btn-row { display: flex; gap: 8px; }
+  .print-btn { background: #0891b2 !important; color: #fff; }
+  .print-btn:hover:not(:disabled) { background: #0e7490 !important; }
+
+  /* Hidden print receipt — only shows when printing */
+  #print-receipt { display: none; }
+
+  @media print {
+    body * { visibility: hidden; }
+    #print-receipt, #print-receipt * { visibility: visible; }
+    #print-receipt {
+      display: block !important;
+      position: absolute;
+      left: 0; top: 0;
+      width: 80mm;
+      padding: 8mm 6mm;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #000;
+      background: #fff;
+    }
+    .pr-header { text-align: center; margin-bottom: 10px; }
+    .pr-biz-name { font-size: 16px; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+    .pr-biz-contact { font-size: 11px; color: #333; }
+    .pr-line { border-top: 1px dashed #000; margin: 8px 0; }
+    .pr-line-solid { border-top: 2px solid #000; margin: 8px 0; }
+    .pr-row { display: flex; justify-content: space-between; font-size: 12px; margin: 2px 0; }
+    .pr-row strong { font-weight: 700; }
+    .pr-table { width: 100%; margin: 6px 0; }
+    .pr-table-head { display: flex; font-weight: 700; font-size: 11px; padding-bottom: 3px; border-bottom: 1px dashed #000; }
+    .pr-table-head > div { flex-basis: 0; }
+    .pr-table-row { display: flex; font-size: 11px; padding: 3px 0; }
+    .pr-table-row > div { flex-basis: 0; }
+    .pr-col-part { flex-grow: 3; text-align: left; }
+    .pr-col-qty { flex-grow: 1; text-align: center; }
+    .pr-col-price { flex-grow: 1.5; text-align: right; }
+    .pr-col-total { flex-grow: 1.5; text-align: right; }
+    .pr-total-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-top: 6px; }
+    .pr-footer { text-align: center; margin-top: 12px; font-size: 11px; }
+    .pr-balance-box { border: 1px dashed #000; padding: 4px 6px; margin-top: 6px; }
+    .pr-balance-row { display: flex; justify-content: space-between; font-size: 11px; }
+  }
 </style>
 </head>
 <body>
@@ -241,7 +284,10 @@
       <button class="save-btn dark" onclick="savePart()">Save Part</button>
     </div>
 
-    <button class="submit-btn dark" onclick="submitSale()">Submit Sale Entry</button>
+    <div class="btn-row">
+      <button class="submit-btn dark" onclick="submitSale()" style="flex:1.5">Submit Sale</button>
+      <button class="submit-btn print-btn" onclick="submitAndPrint()" style="flex:1">🖨 Submit & Print</button>
+    </div>
   </div>
 
   <!-- ══ RESTOCK ══ -->
@@ -345,6 +391,45 @@
       <div class="field"><label>Opening Balance (PKR)</label><input type="number" id="ob-amount" placeholder="Current outstanding amount" min="0"></div>
       <button class="save-btn amber" onclick="saveOB()">Save Opening Balance</button>
     </div>
+  </div>
+</div>
+
+<!-- Print Receipt (hidden — only appears when printing) -->
+<div id="print-receipt">
+  <div class="pr-header">
+    <div class="pr-biz-name" id="pr-biz-name">AUTO PARTS WHOLESALE</div>
+    <div class="pr-biz-contact" id="pr-biz-contact">Contact: 0300-XXXXXXX | City, Pakistan</div>
+  </div>
+  <div class="pr-line-solid"></div>
+  <div class="pr-row"><span>Date:</span><span id="pr-date"></span></div>
+  <div class="pr-row"><span>Shop:</span><span id="pr-shop"></span></div>
+  <div class="pr-row"><span>Visit:</span><span id="pr-visit"></span></div>
+  <div class="pr-row"><span>Billing:</span><span id="pr-billing"></span></div>
+  <div class="pr-line"></div>
+
+  <div class="pr-table">
+    <div class="pr-table-head">
+      <div class="pr-col-part">PART</div>
+      <div class="pr-col-qty">QTY</div>
+      <div class="pr-col-price">PRICE</div>
+      <div class="pr-col-total">TOTAL</div>
+    </div>
+    <div id="pr-items"></div>
+  </div>
+
+  <div class="pr-line"></div>
+  <div class="pr-total-row"><span>BILL TOTAL:</span><span id="pr-bill-total"></span></div>
+
+  <div class="pr-balance-box" id="pr-balance-box">
+    <div class="pr-balance-row"><span>Previous Balance:</span><span id="pr-prev-balance"></span></div>
+    <div class="pr-balance-row"><span>This Credit Sale:</span><span id="pr-this-credit"></span></div>
+    <div class="pr-balance-row" style="border-top:1px dashed #000;padding-top:3px;margin-top:3px;font-weight:700;"><span>NEW OUTSTANDING:</span><span id="pr-new-balance"></span></div>
+  </div>
+
+  <div class="pr-line-solid"></div>
+  <div class="pr-footer">
+    Thank you for your business!<br>
+    Printed: <span id="pr-print-time"></span>
   </div>
 </div>
 
@@ -570,6 +655,14 @@ async function post(payload) {
 }
 
 async function submitSale() {
+  const result = await doSubmitSale(false);
+}
+
+async function submitAndPrint() {
+  await doSubmitSale(true);
+}
+
+async function doSubmitSale(shouldPrint) {
   const date  = document.getElementById('sale-date').value;
   const shop  = document.getElementById('sale-shop-s').value.trim();
   const visit = document.getElementById('sale-visit').value;
@@ -583,10 +676,27 @@ async function submitSale() {
     if(part&&qty>0&&!isNaN(price)) rows.push({part,qty,price});
   });
   if(!rows.length){ toastMsg('Add at least one part','error'); return; }
-  const btn = document.querySelector('.submit-btn.dark'); btn.disabled=true; sLoad();
+
+  const btn = shouldPrint ? document.querySelector('.print-btn') : document.querySelector('.submit-btn.dark');
+  btn.disabled=true; sLoad();
+
+  // Build receipt if needed BEFORE submission (using current balance)
+  if (shouldPrint) {
+    const prevBal = Math.max(0, parseFloat(balanceMap[shop]) || 0);
+    const billTotal = rows.reduce((s, r) => s + r.qty * r.price, 0);
+    const thisCredit = billingMethod === 'Credit' ? billTotal : 0;
+    const newBal = prevBal + thisCredit;
+    fillReceipt(date, shop, visit, rows, billTotal, prevBal, thisCredit, newBal);
+  }
+
   try {
     await post({type:'sale', date, shop, visit, rows, billingMethod});
     toastMsg(billingMethod==='Credit' ? 'Credit sale saved! Balance updated.' : 'Cash sale saved!');
+
+    if (shouldPrint) {
+      setTimeout(() => window.print(), 300);
+    }
+
     document.getElementById('sale-shop-s').value='';
     document.getElementById('sale-visit').value='1st Visit';
     document.getElementById('part-rows').innerHTML=''; rc=0; addRow(); calcBill();
@@ -596,6 +706,42 @@ async function submitSale() {
     fetchData();
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
+}
+
+function fillReceipt(date, shop, visit, rows, billTotal, prevBal, thisCredit, newBal) {
+  document.getElementById('pr-date').textContent = formatReceiptDate(date);
+  document.getElementById('pr-shop').textContent = shop;
+  document.getElementById('pr-visit').textContent = visit;
+  document.getElementById('pr-billing').textContent = billingMethod.toUpperCase();
+
+  const itemsEl = document.getElementById('pr-items');
+  itemsEl.innerHTML = '';
+  rows.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'pr-table-row';
+    div.innerHTML = `
+      <div class="pr-col-part">${r.part}</div>
+      <div class="pr-col-qty">${r.qty}</div>
+      <div class="pr-col-price">${r.price.toLocaleString()}</div>
+      <div class="pr-col-total">${(r.qty * r.price).toLocaleString()}</div>
+    `;
+    itemsEl.appendChild(div);
+  });
+
+  document.getElementById('pr-bill-total').textContent = 'PKR ' + billTotal.toLocaleString();
+  document.getElementById('pr-prev-balance').textContent = 'PKR ' + prevBal.toLocaleString();
+  document.getElementById('pr-this-credit').textContent = 'PKR ' + thisCredit.toLocaleString();
+  document.getElementById('pr-new-balance').textContent = 'PKR ' + newBal.toLocaleString();
+
+  const now = new Date();
+  document.getElementById('pr-print-time').textContent = now.toLocaleString();
+}
+
+function formatReceiptDate(dateStr) {
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch(e) { return dateStr; }
 }
 
 async function submitRestock() {
