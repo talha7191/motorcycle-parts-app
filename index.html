@@ -24,6 +24,7 @@
   .tab.active-sale { color: #1a1a2e; border-bottom-color: #1a1a2e; }
   .tab.active-restock { color: #16a34a; border-bottom-color: #16a34a; }
   .tab.active-payment { color: #d97706; border-bottom-color: #d97706; }
+  .tab.active-expense { color: #7c3aed; border-bottom-color: #7c3aed; }
 
   .content { padding: 16px; max-width: 600px; margin: 0 auto; }
   .panel { display: none; }
@@ -106,6 +107,8 @@
   .submit-btn.green:hover:not(:disabled) { background: #15803d; }
   .submit-btn.amber { background: #d97706; }
   .submit-btn.amber:hover:not(:disabled) { background: #b45309; }
+  .submit-btn.purple { background: #7c3aed; }
+  .submit-btn.purple:hover:not(:disabled) { background: #6d28d9; }
 
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); color: #fff; border-radius: 50px; padding: 11px 22px; font-size: 13px; font-weight: 600; z-index: 999; transition: transform 0.3s ease; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
   .toast.show { transform: translateX(-50%) translateY(0); }
@@ -190,9 +193,10 @@
     <div class="live-badge"><div class="live-dot"></div> Live</div>
   </div>
   <div class="tabs">
-    <div class="tab active-sale" id="tab-sale" onclick="switchTab('sale')">Sale Entry</div>
-    <div class="tab" id="tab-restock" onclick="switchTab('restock')">Restock Entry</div>
+    <div class="tab active-sale" id="tab-sale" onclick="switchTab('sale')">Sale</div>
+    <div class="tab" id="tab-restock" onclick="switchTab('restock')">Restock</div>
     <div class="tab" id="tab-payment" onclick="switchTab('payment')">Payment</div>
+    <div class="tab" id="tab-expense" onclick="switchTab('expense')">Expense</div>
   </div>
 </div>
 
@@ -228,28 +232,6 @@
           <div class="balance-box-amount" id="shop-balance-amount">PKR 0</div>
         </div>
       </div>
-      <div class="field">
-        <label>Billing Method</label>
-        <div class="billing-toggle">
-          <div class="billing-btn active-cash" id="btn-cash" onclick="setBilling('Cash')">Cash</div>
-          <div class="billing-btn" id="btn-credit" onclick="setBilling('Credit')">Credit</div>
-          <div class="billing-btn" id="btn-split" onclick="setBilling('Split')">Split</div>
-        </div>
-        <div id="split-section" style="display:none; margin-top:10px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px;">
-          <div style="font-size:11px; font-weight:600; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Split Payment — how is the bill being paid?</div>
-          <div class="two-col">
-            <div class="field" style="margin-bottom:0">
-              <label style="color:#16a34a">Cash Amount (PKR)</label>
-              <input type="number" id="split-cash" placeholder="0" min="0" oninput="updateSplitCredit()">
-            </div>
-            <div class="field" style="margin-bottom:0">
-              <label style="color:#dc2626">Credit Amount (PKR)</label>
-              <input type="number" id="split-credit" placeholder="0" min="0" oninput="updateSplitCash()">
-            </div>
-          </div>
-          <div style="font-size:11px; color:#92400e; margin-top:8px;" id="split-info">Cash + Credit should equal the Bill Total</div>
-        </div>
-      </div>
     </div>
 
     <div class="card">
@@ -259,6 +241,29 @@
       <div class="bill-total-bar dark">
         <div class="bill-total-label">Total bill amount</div>
         <div class="bill-total-amount" id="bill-total">PKR 0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Billing Method</div>
+      <div class="billing-toggle">
+        <div class="billing-btn active-cash" id="btn-cash" onclick="setBilling('Cash')">Cash</div>
+        <div class="billing-btn" id="btn-credit" onclick="setBilling('Credit')">Credit</div>
+        <div class="billing-btn" id="btn-split" onclick="setBilling('Split')">Split</div>
+      </div>
+      <div id="split-section" style="display:none; margin-top:12px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px;">
+        <div style="font-size:11px; font-weight:600; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Split Payment — how is the bill being paid?</div>
+        <div class="two-col">
+          <div class="field" style="margin-bottom:0">
+            <label style="color:#16a34a">Cash Amount (PKR)</label>
+            <input type="number" id="split-cash" placeholder="0" min="0" oninput="updateSplitCredit()">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label style="color:#dc2626">Credit Amount (PKR)</label>
+            <input type="number" id="split-credit" placeholder="0" min="0" oninput="updateSplitCash()">
+          </div>
+        </div>
+        <div style="font-size:11px; color:#92400e; margin-top:8px;" id="split-info">Cash + Credit should equal the Bill Total</div>
       </div>
     </div>
 
@@ -408,6 +413,21 @@
       <button class="save-btn amber" onclick="saveOB()">Save Opening Balance</button>
     </div>
   </div>
+
+  <!-- ══ EXPENSE ══ -->
+  <div class="panel" id="panel-expense">
+    <div class="card">
+      <div class="card-title">Business Expense</div>
+      <div class="field"><label>Date</label><input type="date" id="exp-date"></div>
+      <div class="field">
+        <label>Category</label>
+        <input type="text" id="exp-category" placeholder="e.g. Fuel, Food, Maintenance, Office supplies...">
+      </div>
+      <div class="field"><label>Amount (PKR)</label><input type="number" id="exp-amount" placeholder="Enter amount" min="1"></div>
+      <div class="field"><label>Description / Notes <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="exp-notes" placeholder="e.g. Fuel for delivery van, client meeting..."></div>
+    </div>
+    <button class="submit-btn purple" onclick="submitExpense()">Record Expense</button>
+  </div>
 </div>
 
 <!-- Print Receipt (hidden — only appears when printing) -->
@@ -458,7 +478,7 @@ let billingMethod = 'Cash';
 
 window.addEventListener('DOMContentLoaded', () => {
   const t = new Date().toISOString().split('T')[0];
-  ['sale-date','re-date','pay-date'].forEach(id => { const el = document.getElementById(id); if(el) el.value = t; });
+  ['sale-date','re-date','pay-date','exp-date'].forEach(id => { const el = document.getElementById(id); if(el) el.value = t; });
   fetchData();
   addRow();
 });
@@ -477,7 +497,7 @@ async function fetchData() {
 }
 
 function switchTab(name) {
-  ['sale','restock','payment'].forEach(t => {
+  ['sale','restock','payment','expense'].forEach(t => {
     document.getElementById('panel-'+t).classList.remove('active');
     document.getElementById('tab-'+t).className = 'tab';
   });
@@ -948,6 +968,24 @@ async function savePart() {
     ['np-name','np-model','np-maker','np-city','np-mc'].forEach(id=>document.getElementById(id).value='');
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   eLoad();
+}
+
+async function submitExpense() {
+  const date     = document.getElementById('exp-date').value;
+  const category = document.getElementById('exp-category').value.trim();
+  const amount   = parseFloat(document.getElementById('exp-amount').value);
+  const notes    = document.getElementById('exp-notes').value.trim();
+  if(!date||!category||!amount||amount<=0){ toastMsg('Fill Date, Category and Amount','error'); return; }
+  const btn = document.querySelector('.submit-btn.purple'); btn.disabled=true; sLoad();
+  try {
+    await post({type:'expense',date,category,amount,notes});
+    toastMsg('Expense recorded!');
+    document.getElementById('exp-category').value='';
+    document.getElementById('exp-amount').value='';
+    document.getElementById('exp-notes').value='';
+    document.getElementById('exp-date').value=new Date().toISOString().split('T')[0];
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
+  btn.disabled=false; eLoad();
 }
 </script>
 </body>
