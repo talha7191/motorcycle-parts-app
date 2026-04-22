@@ -341,7 +341,16 @@
         <div class="field"><label>Quantity</label><input type="number" id="re-qty" placeholder="0" min="1" oninput="calcRe()"></div>
         <div class="field"><label>Cost Price/Unit (PKR)</label><input type="number" id="re-price" placeholder="0" oninput="calcRe()"></div>
       </div>
-      <div class="field"><label>Supplier <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="re-supplier" placeholder="Supplier name"></div>
+      <div class="field">
+        <label>Supplier</label>
+        <div class="search-wrap">
+          <input type="text" id="re-supplier" placeholder="Type to search supplier..." autocomplete="off"
+            oninput="fsearch('re-supplier','re-supplier-dd',suppliers)"
+            onfocus="osearch('re-supplier','re-supplier-dd',suppliers)"
+            onblur="dclose('re-supplier-dd')">
+          <div class="dropdown-list" id="re-supplier-dd"></div>
+        </div>
+      </div>
       <div class="bill-total-bar green" style="margin-top:4px;">
         <div class="bill-total-label">Total Cost</div>
         <div class="bill-total-amount" id="re-total">PKR 0</div>
@@ -619,6 +628,7 @@ function pick(inId, ddId, val) {
   document.getElementById(inId).value = val;
   document.getElementById(ddId).classList.remove('open');
   if (inId === 're-part-s')    autofillRestock(val);
+  if (inId === 're-supplier')  showSupplierPayable(val);
   if (inId === 'sale-shop-s')  showShopBalance(val, 'shop-balance-box', 'shop-balance-amount');
   if (inId === 'pay-shop-s')   showShopBalance(val, 'pay-balance-box', 'pay-balance-amount');
   if (inId === 'sp-name-s')    showSpSupplierBalance(val);
@@ -803,8 +813,6 @@ function autofillRestock(partName) {
   document.getElementById('re-model').value     = d.model     || '';
   document.getElementById('re-condition').value = d.condition || '';
   if (d.unitPrice) { document.getElementById('re-price').value = d.unitPrice; calcRe(); }
-  // Show supplier payable
-  showSupplierPayable(d.maker);
 }
 
 function fpart(inId, ddId) {
