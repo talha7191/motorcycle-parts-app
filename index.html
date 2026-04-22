@@ -383,7 +383,20 @@
     <div class="collapsible-body" id="supplier-pay-body">
       <p class="section-note">Record a payment you made to a supplier (reduces what you owe them).</p>
       <div class="field"><label>Date</label><input type="date" id="sp-date"></div>
-      <div class="field"><label>Supplier Name</label><input type="text" id="sp-name" placeholder="Supplier / manufacturer name"></div>
+      <div class="field">
+        <label>Supplier Name</label>
+        <div class="search-wrap">
+          <input type="text" id="sp-name-s" placeholder="Type to search supplier..." autocomplete="off"
+            oninput="fsearch('sp-name-s','sp-name-dd',suppliers)"
+            onfocus="osearch('sp-name-s','sp-name-dd',suppliers)"
+            onblur="dclose('sp-name-dd')">
+          <div class="dropdown-list" id="sp-name-dd"></div>
+        </div>
+        <div class="balance-box" id="sp-balance-box">
+          <div class="balance-box-label">Currently Owed to this Supplier</div>
+          <div class="balance-box-amount" id="sp-balance-amount">PKR 0</div>
+        </div>
+      </div>
       <div class="field"><label>Amount Paid (PKR)</label><input type="number" id="sp-amount" placeholder="Enter amount" min="1"></div>
       <div class="field"><label>Notes <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="sp-notes" placeholder="e.g. cash, cheque, partial payment..."></div>
       <button class="save-btn dark" onclick="savePaySupplier()">Record Supplier Payment</button>
@@ -394,7 +407,16 @@
     </button>
     <div class="collapsible-body" id="supplier-ob-body">
       <p class="section-note">Use this <strong>once per supplier</strong> to enter how much you already owed them before this system started.</p>
-      <div class="field"><label>Supplier Name</label><input type="text" id="sob-name" placeholder="Supplier / manufacturer name"></div>
+      <div class="field">
+        <label>Supplier Name</label>
+        <div class="search-wrap">
+          <input type="text" id="sob-name-s" placeholder="Type to search supplier..." autocomplete="off"
+            oninput="fsearch('sob-name-s','sob-name-dd',suppliers)"
+            onfocus="osearch('sob-name-s','sob-name-dd',suppliers)"
+            onblur="dclose('sob-name-dd')">
+          <div class="dropdown-list" id="sob-name-dd"></div>
+        </div>
+      </div>
       <div class="field"><label>Opening Balance (PKR)</label><input type="number" id="sob-amount" placeholder="Current outstanding amount" min="0"></div>
       <button class="save-btn dark" onclick="saveSupplierOB()">Save Supplier Opening Balance</button>
     </div>
@@ -523,7 +545,7 @@
 
 <script>
 const URL = "https://script.google.com/macros/s/AKfycbxqM7TK0rbS_HbyDFO9F6oH9wC_aZh028H-oqA2bjSIAdy833nTn1xyWU6Icrp6OkLu_Q/exec";
-let shops = [], parts = [], partsData = {}, balanceMap = {}, stockMap = {}, supplierPayableMap = {}, rc = 0;
+let shops = [], parts = [], suppliers = [], partsData = {}, balanceMap = {}, stockMap = {}, supplierPayableMap = {}, rc = 0;
 let billingMethod = 'Cash';
 let restockPaymentType = 'Cash';
 
@@ -540,6 +562,7 @@ async function fetchData() {
     const d = await r.json();
     shops             = d.shops             || [];
     parts             = d.parts             || [];
+    suppliers         = d.suppliers         || [];
     balanceMap        = d.balanceMap        || {};
     stockMap          = d.stockMap          || {};
     supplierPayableMap = d.supplierPayableMap || {};
@@ -598,6 +621,7 @@ function pick(inId, ddId, val) {
   if (inId === 're-part-s')    autofillRestock(val);
   if (inId === 'sale-shop-s')  showShopBalance(val, 'shop-balance-box', 'shop-balance-amount');
   if (inId === 'pay-shop-s')   showShopBalance(val, 'pay-balance-box', 'pay-balance-amount');
+  if (inId === 'sp-name-s')    showSpSupplierBalance(val);
   if (inId.startsWith('ps-'))  showPartStock(inId.replace('ps-',''), val);
 }
 function dclose(ddId) { setTimeout(() => document.getElementById(ddId).classList.remove('open'), 300); }
@@ -731,6 +755,18 @@ function updateReSplitInfo() {
 function showSupplierPayable(supplier) {
   const box = document.getElementById('supplier-payable-box');
   const amt = document.getElementById('supplier-payable-amount');
+  if (!supplier) { box.classList.remove('show'); return; }
+  const balance = supplierPayableMap[supplier];
+  const val = Math.max(0, parseFloat(balance) || 0);
+  amt.textContent = 'PKR ' + val.toLocaleString();
+  box.classList.add('show');
+  if (val === 0) box.classList.add('zero');
+  else box.classList.remove('zero');
+}
+
+function showSpSupplierBalance(supplier) {
+  const box = document.getElementById('sp-balance-box');
+  const amt = document.getElementById('sp-balance-amount');
   if (!supplier) { box.classList.remove('show'); return; }
   const balance = supplierPayableMap[supplier];
   const val = Math.max(0, parseFloat(balance) || 0);
@@ -1141,7 +1177,7 @@ async function submitExpense() {
 
 async function savePaySupplier() {
   const date     = document.getElementById('sp-date').value;
-  const supplier = document.getElementById('sp-name').value.trim();
+  const supplier = document.getElementById('sp-name-s').value.trim();
   const amount   = parseFloat(document.getElementById('sp-amount').value);
   const notes    = document.getElementById('sp-notes').value.trim();
   if(!date||!supplier||!amount||amount<=0){ toastMsg('Fill Date, Supplier and Amount','error'); return; }
@@ -1149,23 +1185,24 @@ async function savePaySupplier() {
   try {
     await post({type:'supplier_payment',date,supplier,amount,notes});
     toastMsg('Payment to ' + supplier + ' recorded!');
-    document.getElementById('sp-name').value='';
+    document.getElementById('sp-name-s').value='';
     document.getElementById('sp-amount').value='';
     document.getElementById('sp-notes').value='';
+    document.getElementById('sp-balance-box').classList.remove('show');
     fetchData();
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   eLoad();
 }
 
 async function saveSupplierOB() {
-  const supplier = document.getElementById('sob-name').value.trim();
+  const supplier = document.getElementById('sob-name-s').value.trim();
   const amount   = parseFloat(document.getElementById('sob-amount').value);
   if(!supplier||isNaN(amount)||amount<0){ toastMsg('Enter supplier and amount','error'); return; }
   sLoad();
   try {
     await post({type:'supplier_opening_balance',supplier,amount});
     toastMsg('Opening balance saved for ' + supplier + '!');
-    document.getElementById('sob-name').value='';
+    document.getElementById('sob-name-s').value='';
     document.getElementById('sob-amount').value='';
     fetchData();
   } catch(e){ toastMsg('Error. Check internet.','error'); }
