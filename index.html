@@ -347,7 +347,57 @@
         <div class="bill-total-amount" id="re-total">PKR 0</div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-title">Payment Type</div>
+      <div id="supplier-payable-box" class="balance-box" style="margin-bottom:10px;">
+        <div class="balance-box-label">Currently Owed to this Supplier</div>
+        <div class="balance-box-amount" id="supplier-payable-amount">PKR 0</div>
+      </div>
+      <div class="billing-toggle">
+        <div class="billing-btn active-cash" id="re-btn-cash" onclick="setRestockPayment('Cash')">Cash</div>
+        <div class="billing-btn" id="re-btn-credit" onclick="setRestockPayment('Credit')">Credit</div>
+        <div class="billing-btn" id="re-btn-split" onclick="setRestockPayment('Split')">Split</div>
+      </div>
+      <div id="re-split-section" style="display:none; margin-top:12px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px;">
+        <div style="font-size:11px; font-weight:600; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Split Payment — how is this being paid to supplier?</div>
+        <div class="two-col">
+          <div class="field" style="margin-bottom:0">
+            <label style="color:#16a34a">Cash Amount (PKR)</label>
+            <input type="number" id="re-split-cash" placeholder="0" min="0" oninput="updateReSplitCredit()">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label style="color:#dc2626">Credit Amount (PKR)</label>
+            <input type="number" id="re-split-credit" placeholder="0" min="0" oninput="updateReSplitCash()">
+          </div>
+        </div>
+        <div style="font-size:11px; color:#92400e; margin-top:8px;" id="re-split-info">Cash + Credit should equal the Total Cost</div>
+      </div>
+    </div>
+
     <button class="submit-btn green" onclick="submitRestock()">Submit Restock Entry</button>
+
+    <button class="collapsible-trigger" onclick="tog('supplier-pay-body',this)" style="margin-top:14px;">
+      <span>+ Pay Supplier</span><span class="chevron">▼</span>
+    </button>
+    <div class="collapsible-body" id="supplier-pay-body">
+      <p class="section-note">Record a payment you made to a supplier (reduces what you owe them).</p>
+      <div class="field"><label>Date</label><input type="date" id="sp-date"></div>
+      <div class="field"><label>Supplier Name</label><input type="text" id="sp-name" placeholder="Supplier / manufacturer name"></div>
+      <div class="field"><label>Amount Paid (PKR)</label><input type="number" id="sp-amount" placeholder="Enter amount" min="1"></div>
+      <div class="field"><label>Notes <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="sp-notes" placeholder="e.g. cash, cheque, partial payment..."></div>
+      <button class="save-btn dark" onclick="savePaySupplier()">Record Supplier Payment</button>
+    </div>
+
+    <button class="collapsible-trigger" onclick="tog('supplier-ob-body',this)">
+      <span>+ Set Supplier Opening Balance</span><span class="chevron">▼</span>
+    </button>
+    <div class="collapsible-body" id="supplier-ob-body">
+      <p class="section-note">Use this <strong>once per supplier</strong> to enter how much you already owed them before this system started.</p>
+      <div class="field"><label>Supplier Name</label><input type="text" id="sob-name" placeholder="Supplier / manufacturer name"></div>
+      <div class="field"><label>Opening Balance (PKR)</label><input type="number" id="sob-amount" placeholder="Current outstanding amount" min="0"></div>
+      <button class="save-btn dark" onclick="saveSupplierOB()">Save Supplier Opening Balance</button>
+    </div>
 
     <button class="collapsible-trigger" onclick="tog('init-stock-body',this)" style="margin-top:14px;">
       <span>+ Set Initial / Opening Stock</span><span class="chevron">▼</span>
@@ -473,12 +523,13 @@
 
 <script>
 const URL = "https://script.google.com/macros/s/AKfycbxqM7TK0rbS_HbyDFO9F6oH9wC_aZh028H-oqA2bjSIAdy833nTn1xyWU6Icrp6OkLu_Q/exec";
-let shops = [], parts = [], partsData = {}, balanceMap = {}, stockMap = {}, rc = 0;
+let shops = [], parts = [], partsData = {}, balanceMap = {}, stockMap = {}, supplierPayableMap = {}, rc = 0;
 let billingMethod = 'Cash';
+let restockPaymentType = 'Cash';
 
 window.addEventListener('DOMContentLoaded', () => {
   const t = new Date().toISOString().split('T')[0];
-  ['sale-date','re-date','pay-date','exp-date'].forEach(id => { const el = document.getElementById(id); if(el) el.value = t; });
+  ['sale-date','re-date','pay-date','exp-date','sp-date'].forEach(id => { const el = document.getElementById(id); if(el) el.value = t; });
   fetchData();
   addRow();
 });
@@ -487,10 +538,11 @@ async function fetchData() {
   try {
     const r = await fetch(URL + '?type=get_data');
     const d = await r.json();
-    shops      = d.shops      || [];
-    parts      = d.parts      || [];
-    balanceMap = d.balanceMap || {};
-    stockMap   = d.stockMap   || {};
+    shops             = d.shops             || [];
+    parts             = d.parts             || [];
+    balanceMap        = d.balanceMap        || {};
+    stockMap          = d.stockMap          || {};
+    supplierPayableMap = d.supplierPayableMap || {};
     partsData  = {};
     (d.partsDetail || []).forEach(function(p) { if(p.name) partsData[p.name] = p; });
   } catch(e) { console.warn('Data load failed', e); }
@@ -623,6 +675,71 @@ function updateSplitInfo() {
   }
 }
 
+// ── Restock Payment Type (Cash / Credit / Split) ─────
+function setRestockPayment(type) {
+  restockPaymentType = type;
+  document.getElementById('re-btn-cash').className   = 'billing-btn' + (type==='Cash'   ? ' active-cash'   : '');
+  document.getElementById('re-btn-credit').className = 'billing-btn' + (type==='Credit' ? ' active-credit' : '');
+  document.getElementById('re-btn-split').className  = 'billing-btn' + (type==='Split'  ? ' active-split'  : '');
+  const splitSec = document.getElementById('re-split-section');
+  if (type === 'Split') {
+    splitSec.style.display = 'block';
+    const total = getRestockTotal();
+    document.getElementById('re-split-credit').value = total;
+    document.getElementById('re-split-cash').value = 0;
+    updateReSplitInfo();
+  } else {
+    splitSec.style.display = 'none';
+  }
+}
+
+function getRestockTotal() {
+  const q = parseFloat(document.getElementById('re-qty').value) || 0;
+  const p = parseFloat(document.getElementById('re-price').value) || 0;
+  return q * p;
+}
+
+function updateReSplitCredit() {
+  const total = getRestockTotal();
+  const cash = parseFloat(document.getElementById('re-split-cash').value) || 0;
+  document.getElementById('re-split-credit').value = Math.max(0, total - cash);
+  updateReSplitInfo();
+}
+
+function updateReSplitCash() {
+  const total = getRestockTotal();
+  const credit = parseFloat(document.getElementById('re-split-credit').value) || 0;
+  document.getElementById('re-split-cash').value = Math.max(0, total - credit);
+  updateReSplitInfo();
+}
+
+function updateReSplitInfo() {
+  const total = getRestockTotal();
+  const cash = parseFloat(document.getElementById('re-split-cash').value) || 0;
+  const credit = parseFloat(document.getElementById('re-split-credit').value) || 0;
+  const sum = cash + credit;
+  const info = document.getElementById('re-split-info');
+  if (Math.abs(sum - total) < 0.01) {
+    info.style.color = '#16a34a';
+    info.textContent = '✓ Cash + Credit = PKR ' + sum.toLocaleString() + ' (matches total cost)';
+  } else {
+    info.style.color = '#dc2626';
+    info.textContent = '⚠ Cash + Credit = PKR ' + sum.toLocaleString() + ' but total is PKR ' + total.toLocaleString();
+  }
+}
+
+function showSupplierPayable(supplier) {
+  const box = document.getElementById('supplier-payable-box');
+  const amt = document.getElementById('supplier-payable-amount');
+  if (!supplier) { box.classList.remove('show'); return; }
+  const balance = supplierPayableMap[supplier];
+  const val = Math.max(0, parseFloat(balance) || 0);
+  amt.textContent = 'PKR ' + val.toLocaleString();
+  box.classList.add('show');
+  if (val === 0) box.classList.add('zero');
+  else box.classList.remove('zero');
+}
+
 function showPartStock(rowIdx, partName) {
   const box = document.getElementById('stock-info-'+rowIdx);
   if (!box) return;
@@ -650,6 +767,8 @@ function autofillRestock(partName) {
   document.getElementById('re-model').value     = d.model     || '';
   document.getElementById('re-condition').value = d.condition || '';
   if (d.unitPrice) { document.getElementById('re-price').value = d.unitPrice; calcRe(); }
+  // Show supplier payable
+  showSupplierPayable(d.maker);
 }
 
 function fpart(inId, ddId) {
@@ -731,6 +850,11 @@ function calcRe() {
   const q = parseFloat(document.getElementById('re-qty').value)||0;
   const p = parseFloat(document.getElementById('re-price').value)||0;
   document.getElementById('re-total').textContent = 'PKR '+(q*p).toLocaleString();
+  if (restockPaymentType === 'Split') {
+    const cash = parseFloat(document.getElementById('re-split-cash').value) || 0;
+    document.getElementById('re-split-credit').value = Math.max(0, (q*p) - cash);
+    updateReSplitInfo();
+  }
 }
 function tog(id, btn) { document.getElementById(id).classList.toggle('open'); btn.classList.toggle('open'); }
 function sLoad() { document.getElementById('loadingBar').style.width='70%'; }
@@ -877,12 +1001,39 @@ async function submitRestock() {
   const contact   = document.getElementById('re-mc').value.trim();
   const supplier  = document.getElementById('re-supplier').value.trim();
   if(!date||!part||!qty||isNaN(price)){ toastMsg('Fill Part, Quantity and Price','error'); return; }
+
+  const totalCost = qty * price;
+  let splitCash = 0, splitCredit = 0;
+
+  if (restockPaymentType === 'Split') {
+    splitCash   = parseFloat(document.getElementById('re-split-cash').value) || 0;
+    splitCredit = parseFloat(document.getElementById('re-split-credit').value) || 0;
+    if (Math.abs((splitCash + splitCredit) - totalCost) > 0.01) {
+      toastMsg('Cash + Credit must equal total cost','error'); return;
+    }
+    if (splitCash <= 0 || splitCredit <= 0) {
+      toastMsg('Both Cash and Credit must be greater than 0 for Split','error'); return;
+    }
+  }
+
   const btn = document.querySelector('.submit-btn.green'); btn.disabled=true; sLoad();
   try {
-    await post({type:'restock',date,part,qty,price,condition,model,maker,city,contact,supplier});
-    toastMsg('Restock saved!');
-    ['re-part-s','re-qty','re-price','re-model','re-maker','re-city','re-mc','re-supplier','re-condition'].forEach(id=>document.getElementById(id).value='');
+    await post({
+      type:'restock', date, part, qty, price, condition, model, maker, city, contact, supplier,
+      paymentType: restockPaymentType, splitCash, splitCredit
+    });
+    if (restockPaymentType === 'Split') {
+      toastMsg('Restock saved! PKR ' + splitCash.toLocaleString() + ' cash + PKR ' + splitCredit.toLocaleString() + ' credit');
+    } else if (restockPaymentType === 'Credit') {
+      toastMsg('Restock saved! Supplier balance updated.');
+    } else {
+      toastMsg('Restock saved! Cash paid.');
+    }
+    ['re-part-s','re-qty','re-price','re-model','re-maker','re-city','re-mc','re-supplier','re-condition','re-split-cash','re-split-credit'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('re-total').textContent='PKR 0';
+    document.getElementById('supplier-payable-box').classList.remove('show');
+    setRestockPayment('Cash');
+    fetchData();
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
 }
@@ -986,6 +1137,39 @@ async function submitExpense() {
     document.getElementById('exp-date').value=new Date().toISOString().split('T')[0];
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   btn.disabled=false; eLoad();
+}
+
+async function savePaySupplier() {
+  const date     = document.getElementById('sp-date').value;
+  const supplier = document.getElementById('sp-name').value.trim();
+  const amount   = parseFloat(document.getElementById('sp-amount').value);
+  const notes    = document.getElementById('sp-notes').value.trim();
+  if(!date||!supplier||!amount||amount<=0){ toastMsg('Fill Date, Supplier and Amount','error'); return; }
+  sLoad();
+  try {
+    await post({type:'supplier_payment',date,supplier,amount,notes});
+    toastMsg('Payment to ' + supplier + ' recorded!');
+    document.getElementById('sp-name').value='';
+    document.getElementById('sp-amount').value='';
+    document.getElementById('sp-notes').value='';
+    fetchData();
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
+  eLoad();
+}
+
+async function saveSupplierOB() {
+  const supplier = document.getElementById('sob-name').value.trim();
+  const amount   = parseFloat(document.getElementById('sob-amount').value);
+  if(!supplier||isNaN(amount)||amount<0){ toastMsg('Enter supplier and amount','error'); return; }
+  sLoad();
+  try {
+    await post({type:'supplier_opening_balance',supplier,amount});
+    toastMsg('Opening balance saved for ' + supplier + '!');
+    document.getElementById('sob-name').value='';
+    document.getElementById('sob-amount').value='';
+    fetchData();
+  } catch(e){ toastMsg('Error. Check internet.','error'); }
+  eLoad();
 }
 </script>
 </body>
