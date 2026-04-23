@@ -274,7 +274,7 @@
       <div class="field"><label>Shop Name</label><input type="text" id="ns-name" placeholder="Shop name"></div>
       <div class="two-col">
         <div class="field"><label>Location</label><input type="text" id="ns-loc" placeholder="City / Area"></div>
-        <div class="field"><label>Contact No.</label><input type="tel" id="ns-contact" placeholder="03XX-XXXXXXX"></div>
+        <div class="field"><label>Contact No.</label><input type="tel" id="ns-contact" placeholder="03XXXXXXXXX" inputmode="numeric" pattern="[0-9]*"></div>
       </div>
       <div class="field"><label>Opening Balance (PKR)</label><input type="number" id="ns-bal" placeholder="0 if none" min="0"></div>
       <button class="save-btn dark" onclick="saveShop()">Save Shop</button>
@@ -300,8 +300,9 @@
       <div class="field"><label>Maker Name</label><input type="text" id="np-maker" placeholder="Manufacturer name"></div>
       <div class="two-col">
         <div class="field"><label>Maker City</label><input type="text" id="np-city" placeholder="City"></div>
-        <div class="field"><label>Maker Contact</label><input type="tel" id="np-mc" placeholder="Contact no."></div>
+        <div class="field"><label>Maker Contact</label><input type="tel" id="np-mc" placeholder="03XXXXXXXXX" inputmode="numeric" pattern="[0-9]*"></div>
       </div>
+      <div class="field"><label>Price Per Unit (PKR)</label><input type="number" id="np-price" placeholder="0" min="0"></div>
       <button class="save-btn dark" onclick="savePart()">Save Part</button>
     </div>
 
@@ -330,7 +331,7 @@
       <div class="field"><label>Manufacturer Name</label><input type="text" id="re-maker" placeholder="Manufacturer name"></div>
       <div class="two-col">
         <div class="field"><label>Manufacturer City</label><input type="text" id="re-city" placeholder="City"></div>
-        <div class="field"><label>Manufacturer Contact</label><input type="tel" id="re-mc" placeholder="Contact no."></div>
+        <div class="field"><label>Manufacturer Contact</label><input type="tel" id="re-mc" placeholder="03XXXXXXXXX" inputmode="numeric" pattern="[0-9]*"></div>
       </div>
       <div class="two-col">
         <div class="field"><label>Model</label><input type="text" id="re-model" placeholder="CD70 / CG125 / Common"></div>
@@ -661,10 +662,9 @@ function setBilling(method) {
   const splitSection = document.getElementById('split-section');
   if (method === 'Split') {
     splitSection.style.display = 'block';
-    // Auto-fill credit = bill total (starting point)
-    const bill = getBillTotal();
-    document.getElementById('split-credit').value = bill;
-    document.getElementById('split-cash').value = 0;
+    // Leave fields empty — let client fill them in
+    document.getElementById('split-credit').value = '';
+    document.getElementById('split-cash').value = '';
     updateSplitInfo();
   } else {
     splitSection.style.display = 'none';
@@ -718,9 +718,9 @@ function setRestockPayment(type) {
   const splitSec = document.getElementById('re-split-section');
   if (type === 'Split') {
     splitSec.style.display = 'block';
-    const total = getRestockTotal();
-    document.getElementById('re-split-credit').value = total;
-    document.getElementById('re-split-cash').value = 0;
+    // Leave fields empty — let client fill them in
+    document.getElementById('re-split-credit').value = '';
+    document.getElementById('re-split-cash').value = '';
     updateReSplitInfo();
   } else {
     splitSec.style.display = 'none';
@@ -1154,13 +1154,14 @@ async function savePart() {
   const maker     = document.getElementById('np-maker').value.trim();
   const city      = document.getElementById('np-city').value.trim();
   const contact   = document.getElementById('np-mc').value.trim();
+  const unitPrice = parseFloat(document.getElementById('np-price').value) || 0;
   if(!name){ toastMsg('Part name required','error'); return; }
   sLoad();
   try {
-    await post({type:'new_part',name,condition,model,maker,city,contact});
+    await post({type:'new_part',name,condition,model,maker,city,contact,unitPrice});
     parts.push(name);
     toastMsg(name+' added!');
-    ['np-name','np-model','np-maker','np-city','np-mc'].forEach(id=>document.getElementById(id).value='');
+    ['np-name','np-model','np-maker','np-city','np-mc','np-price'].forEach(id=>document.getElementById(id).value='');
   } catch(e){ toastMsg('Error. Check internet.','error'); }
   eLoad();
 }
