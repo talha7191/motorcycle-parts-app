@@ -387,50 +387,6 @@
 
     <button class="submit-btn green" onclick="submitRestock()">Submit Restock Entry</button>
 
-    <button class="collapsible-trigger" onclick="tog('supplier-pay-body',this)" style="margin-top:14px;">
-      <span>+ Pay Supplier</span><span class="chevron">▼</span>
-    </button>
-    <div class="collapsible-body" id="supplier-pay-body">
-      <p class="section-note">Record a payment you made to a supplier (reduces what you owe them).</p>
-      <div class="field"><label>Date</label><input type="date" id="sp-date"></div>
-      <div class="field">
-        <label>Supplier Name</label>
-        <div class="search-wrap">
-          <input type="text" id="sp-name-s" placeholder="Type to search supplier..." autocomplete="off"
-            oninput="fsearch('sp-name-s','sp-name-dd',suppliers)"
-            onfocus="osearch('sp-name-s','sp-name-dd',suppliers)"
-            onblur="dclose('sp-name-dd')">
-          <div class="dropdown-list" id="sp-name-dd"></div>
-        </div>
-        <div class="balance-box" id="sp-balance-box">
-          <div class="balance-box-label">Currently Owed to this Supplier</div>
-          <div class="balance-box-amount" id="sp-balance-amount">PKR 0</div>
-        </div>
-      </div>
-      <div class="field"><label>Amount Paid (PKR)</label><input type="number" id="sp-amount" placeholder="Enter amount" min="1"></div>
-      <div class="field"><label>Notes <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="sp-notes" placeholder="e.g. cash, cheque, partial payment..."></div>
-      <button class="save-btn dark" onclick="savePaySupplier()">Record Supplier Payment</button>
-    </div>
-
-    <button class="collapsible-trigger" onclick="tog('supplier-ob-body',this)">
-      <span>+ Set Supplier Opening Balance</span><span class="chevron">▼</span>
-    </button>
-    <div class="collapsible-body" id="supplier-ob-body">
-      <p class="section-note">Use this <strong>once per supplier</strong> to enter how much you already owed them before this system started.</p>
-      <div class="field">
-        <label>Supplier Name</label>
-        <div class="search-wrap">
-          <input type="text" id="sob-name-s" placeholder="Type to search supplier..." autocomplete="off"
-            oninput="fsearch('sob-name-s','sob-name-dd',suppliers)"
-            onfocus="osearch('sob-name-s','sob-name-dd',suppliers)"
-            onblur="dclose('sob-name-dd')">
-          <div class="dropdown-list" id="sob-name-dd"></div>
-        </div>
-      </div>
-      <div class="field"><label>Opening Balance (PKR)</label><input type="number" id="sob-amount" placeholder="Current outstanding amount" min="0"></div>
-      <button class="save-btn dark" onclick="saveSupplierOB()">Save Supplier Opening Balance</button>
-    </div>
-
     <button class="collapsible-trigger" onclick="tog('init-stock-body',this)" style="margin-top:14px;">
       <span>+ Set Initial / Opening Stock</span><span class="chevron">▼</span>
     </button>
@@ -493,6 +449,50 @@
       </div>
       <div class="field"><label>Opening Balance (PKR)</label><input type="number" id="ob-amount" placeholder="Current outstanding amount" min="0"></div>
       <button class="save-btn amber" onclick="saveOB()">Save Opening Balance</button>
+    </div>
+
+    <button class="collapsible-trigger" onclick="tog('supplier-pay-body',this)" style="margin-top:14px;">
+      <span>+ Pay Supplier</span><span class="chevron">▼</span>
+    </button>
+    <div class="collapsible-body" id="supplier-pay-body">
+      <p class="section-note">Record a payment you made to a supplier (reduces what you owe them).</p>
+      <div class="field"><label>Date</label><input type="date" id="sp-date"></div>
+      <div class="field">
+        <label>Supplier Name</label>
+        <div class="search-wrap">
+          <input type="text" id="sp-name-s" placeholder="Type to search supplier..." autocomplete="off"
+            oninput="fsearch('sp-name-s','sp-name-dd',suppliers)"
+            onfocus="osearch('sp-name-s','sp-name-dd',suppliers)"
+            onblur="dclose('sp-name-dd')">
+          <div class="dropdown-list" id="sp-name-dd"></div>
+        </div>
+        <div class="balance-box" id="sp-balance-box">
+          <div class="balance-box-label">Currently Owed to this Supplier</div>
+          <div class="balance-box-amount" id="sp-balance-amount">PKR 0</div>
+        </div>
+      </div>
+      <div class="field"><label>Amount Paid (PKR)</label><input type="number" id="sp-amount" placeholder="Enter amount" min="1"></div>
+      <div class="field"><label>Notes <span style="font-weight:400;color:#bbb">(optional)</span></label><input type="text" id="sp-notes" placeholder="e.g. cash, cheque, partial payment..."></div>
+      <button class="save-btn amber" onclick="savePaySupplier()">Record Supplier Payment</button>
+    </div>
+
+    <button class="collapsible-trigger" onclick="tog('supplier-ob-body',this)">
+      <span>+ Set Supplier Opening Balance</span><span class="chevron">▼</span>
+    </button>
+    <div class="collapsible-body" id="supplier-ob-body">
+      <p class="section-note">Use this <strong>once per supplier</strong> to enter how much you already owed them before this system started.</p>
+      <div class="field">
+        <label>Supplier Name</label>
+        <div class="search-wrap">
+          <input type="text" id="sob-name-s" placeholder="Type to search supplier..." autocomplete="off"
+            oninput="fsearch('sob-name-s','sob-name-dd',suppliers)"
+            onfocus="osearch('sob-name-s','sob-name-dd',suppliers)"
+            onblur="dclose('sob-name-dd')">
+          <div class="dropdown-list" id="sob-name-dd"></div>
+        </div>
+      </div>
+      <div class="field"><label>Opening Balance (PKR)</label><input type="number" id="sob-amount" placeholder="Current outstanding amount" min="0"></div>
+      <button class="save-btn amber" onclick="saveSupplierOB()">Save Supplier Opening Balance</button>
     </div>
   </div>
 
