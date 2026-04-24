@@ -578,7 +578,24 @@ async function fetchData() {
     supplierPayableMap = d.supplierPayableMap || {};
     partsData  = {};
     (d.partsDetail || []).forEach(function(p) { if(p.name) partsData[p.name] = p; });
+    refreshVisibleBalances();
   } catch(e) { console.warn('Data load failed', e); }
+}
+
+function refreshVisibleBalances() {
+  // Refresh shop balance boxes if a shop is selected
+  const saleShop = document.getElementById('sale-shop-s')?.value.trim();
+  if (saleShop) showShopBalance(saleShop, 'shop-balance-box', 'shop-balance-amount');
+
+  const payShop = document.getElementById('pay-shop-s')?.value.trim();
+  if (payShop) showShopBalance(payShop, 'pay-balance-box', 'pay-balance-amount');
+
+  // Refresh supplier balance boxes if a supplier is selected
+  const reSupplier = document.getElementById('re-supplier')?.value.trim();
+  if (reSupplier) showSupplierPayable(reSupplier);
+
+  const spSupplier = document.getElementById('sp-name-s')?.value.trim();
+  if (spSupplier) showSpSupplierBalance(spSupplier);
 }
 
 function switchTab(name) {
