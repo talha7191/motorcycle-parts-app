@@ -190,9 +190,7 @@
         <div class="header-sub">Wholesale Entry System</div>
       </div>
     </div>
-    <div class="live-badge" onclick="openRecentEntries()" style="cursor:pointer;background:#fff3cd;color:#856404;padding:6px 12px;border-radius:20px;border:1px solid #ffc107;">
-      <span style="font-size:14px;">↺</span> Recent Entries
-    </div>
+    <div class="live-badge"><div class="live-dot"></div> Live</div>
   </div>
   <div class="tabs">
     <div class="tab active-sale" id="tab-sale" onclick="switchTab('sale')">Sale</div>
@@ -553,21 +551,29 @@
   </div>
 </div>
 
-<!-- Recent Entries Modal -->
-<div id="recent-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:5000; padding:20px; overflow-y:auto;">
-  <div style="background:#fff; max-width:600px; margin:40px auto; border-radius:12px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <div>
-        <div style="font-size:18px; font-weight:700; color:#1a1a2e;">Recent Entries</div>
-        <div style="font-size:12px; color:#888;">Last 5 entries — click cancel to remove an entry</div>
-      </div>
-      <button onclick="closeRecentEntries()" style="background:#f0f0f0; border:none; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer; color:#666;">✕</button>
+<div class="toast" id="toast"></div>
+
+<!-- Custom Confirmation Modal -->
+<div id="confirm-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:6000; padding:20px; align-items:center; justify-content:center;">
+  <div style="background:#fff; max-width:380px; width:100%; margin:auto; border-radius:16px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.25); animation:modalIn 0.2s ease-out;">
+    <div style="font-size:42px; text-align:center; margin-bottom:8px;" id="confirm-icon">📝</div>
+    <div style="font-size:18px; font-weight:700; color:#1a1a2e; text-align:center; margin-bottom:6px;" id="confirm-title">Confirm Entry</div>
+    <div style="font-size:13px; color:#666; text-align:center; margin-bottom:18px;">Please review the details below</div>
+    <div id="confirm-body" style="background:#fafafa; border:1px solid #e8e8e8; border-radius:10px; padding:14px; margin-bottom:18px; font-size:13px; line-height:1.7;"></div>
+    <div style="display:flex; gap:10px;">
+      <button onclick="hideConfirm(false)" style="flex:1; padding:12px; border:1.5px solid #e0e0e0; border-radius:10px; background:#fff; color:#666; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;">Cancel</button>
+      <button onclick="hideConfirm(true)" id="confirm-yes-btn" style="flex:1.3; padding:12px; border:none; border-radius:10px; background:#1a1a2e; color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;">Yes, Submit</button>
     </div>
-    <div id="recent-entries-list" style="max-height:60vh; overflow-y:auto;"></div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<style>
+@keyframes modalIn {
+  from { opacity:0; transform:scale(0.9); }
+  to { opacity:1; transform:scale(1); }
+}
+#confirm-modal.show { display:flex !important; }
+</style>
 
 <script>
 const URL = "https://script.google.com/macros/s/AKfycbxqM7TK0rbS_HbyDFO9F6oH9wC_aZh028H-oqA2bjSIAdy833nTn1xyWU6Icrp6OkLu_Q/exec";
@@ -947,6 +953,28 @@ async function post(payload) {
   return r.json();
 }
 
+// ── Beautiful Confirmation Modal ──
+let confirmResolve = null;
+function askConfirm(opts) {
+  return new Promise(resolve => {
+    confirmResolve = resolve;
+    document.getElementById('confirm-icon').textContent  = opts.icon  || '📝';
+    document.getElementById('confirm-title').textContent = opts.title || 'Confirm Entry';
+    document.getElementById('confirm-body').innerHTML    = opts.body  || '';
+    const btn = document.getElementById('confirm-yes-btn');
+    btn.textContent = opts.confirmText || 'Yes, Submit';
+    btn.style.background = opts.color || '#1a1a2e';
+    document.getElementById('confirm-modal').classList.add('show');
+  });
+}
+function hideConfirm(result) {
+  document.getElementById('confirm-modal').classList.remove('show');
+  if (confirmResolve) { confirmResolve(result); confirmResolve = null; }
+}
+function row(label, value) {
+  return '<div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#888;">'+label+'</span><span style="color:#1a1a2e; font-weight:600; text-align:right;">'+value+'</span></div>';
+}
+
 async function submitSale() {
   const result = await doSubmitSale(false);
 }
@@ -986,18 +1014,22 @@ async function doSubmitSale(shouldPrint) {
     }
   }
 
-  // Confirmation popup
-  let confirmMsg = 'Submit this sale?\n\n';
-  confirmMsg += 'Shop: ' + shop + '\n';
-  confirmMsg += 'Date: ' + date + '\n';
-  confirmMsg += 'Visit: ' + visit + '\n';
-  confirmMsg += 'Total Bill: PKR ' + billTotal.toLocaleString() + '\n';
-  confirmMsg += 'Method: ' + billingMethod;
+  // Beautiful confirmation popup
+  let body = row('Shop', shop);
+  body += row('Date', date);
+  body += row('Visit', visit);
+  body += row('Total Bill', 'PKR ' + billTotal.toLocaleString());
+  body += row('Method', billingMethod);
   if (billingMethod === 'Split') {
-    confirmMsg += ' (Cash: ' + splitCash.toLocaleString() + ', Credit: ' + splitCredit.toLocaleString() + ')';
+    body += row('Cash', 'PKR ' + splitCash.toLocaleString());
+    body += row('Credit', 'PKR ' + splitCredit.toLocaleString());
   }
-  confirmMsg += '\n\nParts: ' + rows.length;
-  if (!confirm(confirmMsg)) return;
+  body += row('Parts', rows.length);
+  const ok = await askConfirm({
+    icon:'🛒', title:'Confirm Sale Entry', body:body, color:'#1a1a2e',
+    confirmText: shouldPrint ? 'Submit & Print' : 'Yes, Submit Sale'
+  });
+  if (!ok) return;
 
   const btn = shouldPrint ? document.querySelector('.print-btn') : document.querySelector('.submit-btn.dark');
   btn.disabled=true; sLoad();
@@ -1106,19 +1138,23 @@ async function submitRestock() {
     }
   }
 
-  // Confirmation popup
-  let confirmMsg = 'Submit this restock?\n\n';
-  confirmMsg += 'Part: ' + part + '\n';
-  confirmMsg += 'Date: ' + date + '\n';
-  confirmMsg += 'Quantity: ' + qty + '\n';
-  confirmMsg += 'Cost/Unit: PKR ' + price.toLocaleString() + '\n';
-  confirmMsg += 'Total Cost: PKR ' + totalCost.toLocaleString() + '\n';
-  confirmMsg += 'Supplier: ' + (supplier || 'Not specified') + '\n';
-  confirmMsg += 'Payment: ' + restockPaymentType;
+  // Beautiful confirmation popup
+  let body = row('Part', part);
+  body += row('Date', date);
+  body += row('Quantity', qty);
+  body += row('Cost/Unit', 'PKR ' + price.toLocaleString());
+  body += row('Total Cost', 'PKR ' + totalCost.toLocaleString());
+  body += row('Supplier', supplier || 'Not specified');
+  body += row('Payment', restockPaymentType);
   if (restockPaymentType === 'Split') {
-    confirmMsg += ' (Cash: ' + splitCash.toLocaleString() + ', Credit: ' + splitCredit.toLocaleString() + ')';
+    body += row('Cash', 'PKR ' + splitCash.toLocaleString());
+    body += row('Credit', 'PKR ' + splitCredit.toLocaleString());
   }
-  if (!confirm(confirmMsg)) return;
+  const ok = await askConfirm({
+    icon:'📦', title:'Confirm Restock Entry', body:body, color:'#16a34a',
+    confirmText:'Yes, Submit Restock'
+  });
+  if (!ok) return;
 
   const btn = document.querySelector('.submit-btn.green'); btn.disabled=true; sLoad();
   try {
@@ -1149,12 +1185,15 @@ async function submitPayment() {
   const notes  = document.getElementById('pay-notes').value.trim();
   if(!date||!shop||!amount||amount<=0){ toastMsg('Fill Date, Shop and Amount','error'); return; }
 
-  let confirmMsg = 'Record this payment?\n\n';
-  confirmMsg += 'Shop: ' + shop + '\n';
-  confirmMsg += 'Date: ' + date + '\n';
-  confirmMsg += 'Amount Received: PKR ' + amount.toLocaleString();
-  if (notes) confirmMsg += '\nNotes: ' + notes;
-  if (!confirm(confirmMsg)) return;
+  let body = row('Shop', shop);
+  body += row('Date', date);
+  body += row('Amount Received', 'PKR ' + amount.toLocaleString());
+  if (notes) body += row('Notes', notes);
+  const ok = await askConfirm({
+    icon:'💰', title:'Confirm Payment Received', body:body, color:'#d97706',
+    confirmText:'Yes, Record Payment'
+  });
+  if (!ok) return;
 
   const btn = document.querySelector('.submit-btn.amber'); btn.disabled=true; sLoad();
   try {
@@ -1172,10 +1211,13 @@ async function saveOB() {
   const amount = parseFloat(document.getElementById('ob-amount').value);
   if(!shop||isNaN(amount)||amount<0){ toastMsg('Enter shop and amount','error'); return; }
 
-  let confirmMsg = 'Set opening balance?\n\n';
-  confirmMsg += 'Shop: ' + shop + '\n';
-  confirmMsg += 'Opening Balance: PKR ' + amount.toLocaleString();
-  if (!confirm(confirmMsg)) return;
+  let body = row('Shop', shop);
+  body += row('Opening Balance', 'PKR ' + amount.toLocaleString());
+  const ok = await askConfirm({
+    icon:'⚖️', title:'Confirm Opening Balance', body:body, color:'#d97706',
+    confirmText:'Yes, Save Balance'
+  });
+  if (!ok) return;
 
   sLoad();
   try {
@@ -1221,66 +1263,6 @@ async function saveInitStock() {
   eLoad();
 }
 
-async function openRecentEntries() {
-  document.getElementById('recent-modal').style.display = 'block';
-  const listEl = document.getElementById('recent-entries-list');
-  listEl.innerHTML = '<div style="text-align:center; padding:40px; color:#888;">Loading...</div>';
-  try {
-    const r = await fetch(URL + '?type=recent_entries');
-    const d = await r.json();
-    const entries = d.entries || [];
-    if (!entries.length) {
-      listEl.innerHTML = '<div style="text-align:center; padding:40px; color:#888;">No recent entries</div>';
-      return;
-    }
-    listEl.innerHTML = '';
-    entries.forEach((entry, idx) => {
-      const div = document.createElement('div');
-      div.style.cssText = 'border:1px solid #e8e8e8; border-radius:8px; padding:12px; margin-bottom:10px; background:#fafafa;';
-      let typeColor = '#1a1a2e';
-      if (entry.entryType === 'Sale') typeColor = '#1a1a2e';
-      else if (entry.entryType === 'Restock') typeColor = '#16a34a';
-      else if (entry.entryType === 'Payment Received') typeColor = '#d97706';
-      else if (entry.entryType === 'Supplier Payment') typeColor = '#d97706';
-      else if (entry.entryType === 'Expense') typeColor = '#7c3aed';
-      div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div style="flex:1;">
-            <div style="display:inline-block; background:${typeColor}; color:#fff; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; text-transform:uppercase;">${entry.entryType}</div>
-            <div style="font-size:13px; color:#1a1a2e; margin-top:6px; font-weight:600;">${entry.summary}</div>
-            <div style="font-size:11px; color:#888; margin-top:4px;">${entry.timestamp}</div>
-          </div>
-          <button onclick="cancelEntry('${entry.entryType}', '${entry.timestamp}', this)" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600;">Cancel</button>
-        </div>
-      `;
-      listEl.appendChild(div);
-    });
-  } catch(e) {
-    listEl.innerHTML = '<div style="text-align:center; padding:40px; color:#dc2626;">Failed to load entries. Check internet.</div>';
-  }
-}
-
-function closeRecentEntries() {
-  document.getElementById('recent-modal').style.display = 'none';
-}
-
-async function cancelEntry(entryType, timestamp, btn) {
-  if (!confirm('Are you sure you want to cancel this ' + entryType + ' entry? This cannot be undone.')) return;
-  btn.disabled = true; btn.textContent = '...';
-  sLoad();
-  try {
-    await post({type:'cancel_entry', entryType, timestamp});
-    toastMsg(entryType + ' entry cancelled');
-    fetchData();
-    openRecentEntries(); // Refresh the list
-  } catch(e) {
-    toastMsg('Failed to cancel. Check internet.','error');
-    btn.disabled = false;
-    btn.textContent = 'Cancel';
-  }
-  eLoad();
-}
-
 async function savePart() {
   const name      = document.getElementById('np-name').value.trim();
   const condition = document.getElementById('np-cond').value;
@@ -1307,12 +1289,15 @@ async function submitExpense() {
   const notes    = document.getElementById('exp-notes').value.trim();
   if(!date||!category||!amount||amount<=0){ toastMsg('Fill Date, Category and Amount','error'); return; }
 
-  let confirmMsg = 'Record this expense?\n\n';
-  confirmMsg += 'Date: ' + date + '\n';
-  confirmMsg += 'Category: ' + category + '\n';
-  confirmMsg += 'Amount: PKR ' + amount.toLocaleString();
-  if (notes) confirmMsg += '\nNotes: ' + notes;
-  if (!confirm(confirmMsg)) return;
+  let body = row('Date', date);
+  body += row('Category', category);
+  body += row('Amount', 'PKR ' + amount.toLocaleString());
+  if (notes) body += row('Notes', notes);
+  const ok = await askConfirm({
+    icon:'💸', title:'Confirm Expense', body:body, color:'#7c3aed',
+    confirmText:'Yes, Record Expense'
+  });
+  if (!ok) return;
 
   const btn = document.querySelector('.submit-btn.purple'); btn.disabled=true; sLoad();
   try {
@@ -1333,12 +1318,15 @@ async function savePaySupplier() {
   const notes    = document.getElementById('sp-notes').value.trim();
   if(!date||!supplier||!amount||amount<=0){ toastMsg('Fill Date, Supplier and Amount','error'); return; }
 
-  let confirmMsg = 'Record this supplier payment?\n\n';
-  confirmMsg += 'Supplier: ' + supplier + '\n';
-  confirmMsg += 'Date: ' + date + '\n';
-  confirmMsg += 'Amount Paid: PKR ' + amount.toLocaleString();
-  if (notes) confirmMsg += '\nNotes: ' + notes;
-  if (!confirm(confirmMsg)) return;
+  let body = row('Supplier', supplier);
+  body += row('Date', date);
+  body += row('Amount Paid', 'PKR ' + amount.toLocaleString());
+  if (notes) body += row('Notes', notes);
+  const ok = await askConfirm({
+    icon:'🏭', title:'Confirm Supplier Payment', body:body, color:'#d97706',
+    confirmText:'Yes, Record Payment'
+  });
+  if (!ok) return;
 
   sLoad();
   try {
@@ -1358,10 +1346,13 @@ async function saveSupplierOB() {
   const amount   = parseFloat(document.getElementById('sob-amount').value);
   if(!supplier||isNaN(amount)||amount<0){ toastMsg('Enter supplier and amount','error'); return; }
 
-  let confirmMsg = 'Set supplier opening balance?\n\n';
-  confirmMsg += 'Supplier: ' + supplier + '\n';
-  confirmMsg += 'Opening Balance: PKR ' + amount.toLocaleString();
-  if (!confirm(confirmMsg)) return;
+  let body = row('Supplier', supplier);
+  body += row('Opening Balance', 'PKR ' + amount.toLocaleString());
+  const ok = await askConfirm({
+    icon:'⚖️', title:'Confirm Supplier Balance', body:body, color:'#d97706',
+    confirmText:'Yes, Save Balance'
+  });
+  if (!ok) return;
 
   sLoad();
   try {
